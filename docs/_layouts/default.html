@@ -34,11 +34,13 @@
       .content-container {
         background: rgba(255, 255, 255, 0.02);
         border-radius: 12px;
-        padding: 2rem;
-        margin: 2rem 0;
+        padding: 3rem;
+        margin: 3rem auto;
+        max-width: 900px;
         border: 1px solid rgba(255, 255, 255, 0.1);
         backdrop-filter: blur(10px);
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        line-height: 1.8;
       }
       
       .footer-container {
@@ -210,58 +212,69 @@
       /* Content Typography */
       .content-container h1 {
         color: var(--kraven-primary);
-        font-size: 2.5rem;
-        margin-bottom: 1.5rem;
+        font-size: 2.2rem;
+        margin-bottom: 2rem;
         border-bottom: 2px solid var(--kraven-primary);
-        padding-bottom: 0.5rem;
+        padding-bottom: 1rem;
+        text-align: center;
       }
       
       .content-container h2 {
         color: var(--kraven-secondary);
-        font-size: 2rem;
-        margin: 2rem 0 1rem 0;
+        font-size: 1.8rem;
+        margin: 3rem 0 1.5rem 0;
         display: flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: 0.75rem;
       }
       
       .content-container h3 {
         color: #fff;
-        font-size: 1.5rem;
-        margin: 1.5rem 0 1rem 0;
+        font-size: 1.4rem;
+        margin: 2.5rem 0 1.2rem 0;
+      }
+      
+      .content-container h4 {
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 1.2rem;
+        margin: 2rem 0 1rem 0;
       }
       
       .content-container p {
-        margin-bottom: 1.2rem;
-        line-height: 1.7;
-        color: rgba(255, 255, 255, 0.9);
+        margin-bottom: 1.5rem;
+        line-height: 1.8;
+        color: rgba(255, 255, 255, 0.85);
+        font-size: 1.05rem;
       }
       
       .content-container ul, .content-container ol {
-        margin-bottom: 1.2rem;
-        padding-left: 2rem;
+        margin-bottom: 2rem;
+        padding-left: 2.5rem;
       }
       
       .content-container li {
-        margin-bottom: 0.5rem;
-        color: rgba(255, 255, 255, 0.9);
+        margin-bottom: 0.8rem;
+        color: rgba(255, 255, 255, 0.85);
+        line-height: 1.7;
       }
       
       .content-container code {
-        background: rgba(255, 107, 53, 0.1);
+        background: rgba(255, 107, 53, 0.15);
         color: var(--kraven-primary);
-        padding: 0.2rem 0.4rem;
-        border-radius: 4px;
+        padding: 0.3rem 0.6rem;
+        border-radius: 6px;
         font-family: 'Courier New', monospace;
+        font-size: 0.95rem;
       }
       
       .content-container pre {
-        background: rgba(0, 0, 0, 0.3);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 8px;
-        padding: 1rem;
+        background: rgba(0, 0, 0, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 10px;
+        padding: 1.5rem;
         overflow-x: auto;
-        margin: 1rem 0;
+        margin: 2rem 0;
+        box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.3);
       }
       
       .content-container pre code {
@@ -331,16 +344,26 @@
         }
         
         .content-container {
-          padding: 1rem;
-          margin: 1rem 0;
+          padding: 2rem 1.5rem;
+          margin: 2rem 1rem;
+          max-width: 95%;
         }
         
         .content-container h1 {
-          font-size: 2rem;
+          font-size: 1.8rem;
         }
         
         .content-container h2 {
-          font-size: 1.5rem;
+          font-size: 1.4rem;
+          margin: 2rem 0 1rem 0;
+        }
+        
+        .content-container h3 {
+          font-size: 1.2rem;
+        }
+        
+        .content-container p {
+          font-size: 1rem;
         }
       }
     </style>
