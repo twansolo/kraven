@@ -1,7 +1,7 @@
 # Jekyll Configuration for Kraven
-title: "Kraven"
+title: "Kraven 🕷️"
 tagline: "Hunt Abandoned GitHub Projects"
-description: "Discover unmaintained repositories with active communities waiting for new maintainers. Find your next open source project to revive."
+description: "Hunt abandoned GitHub repositories - Discover forgotten gems and resurrection candidates"
 url: "https://twansolo.github.io"
 baseurl: "/kraven"
 logo: "/kraven.png"
@@ -12,15 +12,15 @@ author:
   email: "hello@kraven.dev"
   github: "twansolo"
 
-# Theme - Using Cayman for GitHub Pages
-remote_theme: pages-themes/cayman@v0.2.0
+# Build settings
+markdown: kramdown
+highlighter: rouge
 
-# Plugins
+# GitHub Pages compatible plugins
 plugins:
   - jekyll-feed
   - jekyll-sitemap
   - jekyll-seo-tag
-  - jekyll-github-metadata
 
 # SEO and Social
 twitter:
@@ -75,6 +75,26 @@ defaults:
     values:
       layout: "example"
 
+# GitHub Pages settings
+safe: true
+incremental: false
+lsi: false
+
+# Kraven branding
+kraven:
+  tagline: "Hunt abandoned GitHub repositories"
+  subtitle: "Discover forgotten gems and resurrection candidates"
+  colors:
+    primary: "#9d4edd"      # Spider purple
+    secondary: "#7b2cbf"    # Darker purple
+    accent: "#e0aaff"       # Light purple
+    dark: "#3c096c"         # Deep purple
+    background: "#0d0208"   # Almost black
+
+# Social links
+github_username: twansolo
+repository: kraven
+
 # Exclude files from processing
 exclude:
   - node_modules/
@@ -87,7 +107,9 @@ exclude:
   - README.md
   - CONTRIBUTING.md
   - LICENSE
-  - "*.md"
+  - Gemfile
+  - Gemfile.lock
+  - vendor/
 
 # Include files
 include:
