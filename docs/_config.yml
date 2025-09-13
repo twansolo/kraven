@@ -1,16 +1,78 @@
-# GitHub Pages Configuration for Kraven
-title: "Kraven - Hunt Abandoned GitHub Projects"
-description: "Discover unmaintained repositories with active communities waiting for new maintainers"
+# Jekyll Configuration for Kraven
+title: "Kraven"
+tagline: "Hunt Abandoned GitHub Projects"
+description: "Discover unmaintained repositories with active communities waiting for new maintainers. Find your next open source project to revive."
 url: "https://twansolo.github.io"
 baseurl: "/kraven"
 
-# Theme
-theme: minima
+# Site settings
+author:
+  name: "Kraven Project"
+  email: "hello@kraven.dev"
+  github: "twansolo"
+
+# Theme - Using Cayman for GitHub Pages
+remote_theme: pages-themes/cayman@v0.2.0
 
 # Plugins
 plugins:
   - jekyll-feed
   - jekyll-sitemap
+  - jekyll-seo-tag
+  - jekyll-github-metadata
+
+# SEO and Social
+twitter:
+  username: twansolo
+  card: summary_large_image
+
+social:
+  name: Kraven Project Hunter
+  links:
+    - https://github.com/twansolo/kraven
+    - https://www.npmjs.com/package/kraven
+
+# Navigation
+navigation:
+  - title: "Home"
+    url: "/"
+  - title: "Hunt Projects"
+    url: "/hunt/"
+  - title: "Documentation"
+    url: "/docs/"
+  - title: "Examples"
+    url: "/examples/"
+  - title: "CLI Tool"
+    url: "/cli/"
+  - title: "GitHub"
+    url: "https://github.com/twansolo/kraven"
+
+# Collections
+collections:
+  docs:
+    output: true
+    permalink: /:collection/:name/
+  examples:
+    output: true
+    permalink: /:collection/:name/
+
+# Defaults
+defaults:
+  - scope:
+      path: ""
+      type: "pages"
+    values:
+      layout: "default"
+  - scope:
+      path: ""
+      type: "docs"
+    values:
+      layout: "docs"
+  - scope:
+      path: ""
+      type: "examples"
+    values:
+      layout: "example"
 
 # Exclude files from processing
 exclude:
@@ -22,6 +84,9 @@ exclude:
   - dist/
   - .gitignore
   - README.md
+  - CONTRIBUTING.md
+  - LICENSE
+  - "*.md"
 
 # Include files
 include:
