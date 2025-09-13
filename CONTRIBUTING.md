@@ -5,13 +5,13 @@ Thank you for your interest in contributing to Kraven! This document provides gu
 ## 🎯 Ways to Contribute
 
 ### 🐛 **Bug Reports**
-- Use the [issue tracker](https://github.com/yourusername/kraven/issues)
+- Use the [issue tracker](https://github.com/twansolo/kraven/issues)
 - Search existing issues before creating new ones
 - Include steps to reproduce, expected vs actual behavior
 - Add relevant system information (OS, Node.js version, etc.)
 
 ### 💡 **Feature Requests**
-- Start with [GitHub Discussions](https://github.com/yourusername/kraven/discussions)
+- Start with [GitHub Discussions](https://github.com/twansolo/kraven/discussions)
 - Describe the problem you're trying to solve
 - Explain why this feature would be valuable
 - Consider implementation complexity and scope
@@ -34,7 +34,7 @@ Thank you for your interest in contributing to Kraven! This document provides gu
 ### Local Setup
 ```bash
 # Clone your fork
-git clone https://github.com/yourusername/kraven.git
+git clone https://github.com/twansolo/kraven.git
 cd kraven
 
 # Install dependencies

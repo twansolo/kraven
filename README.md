@@ -1,10 +1,10 @@
 # 🕷️ Kraven - The Abandoned Project Hunter
 
 [![npm version](https://badge.fury.io/js/kraven.svg)](https://badge.fury.io/js/kraven)
-[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live-brightgreen)](https://yourusername.github.io/kraven/)
+[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live-brightgreen)](https://twansolo.github.io/kraven/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![GitHub stars](https://img.shields.io/github/stars/yourusername/kraven?style=social)](https://github.com/yourusername/kraven/stargazers)
+[![GitHub stars](https://img.shields.io/github/stars/twansolo/kraven?style=social)](https://github.com/twansolo/kraven/stargazers)
 
 > 🕷️ **Hunt abandoned GitHub repositories ripe for revival.** Kraven discovers unmaintained projects with active communities, analyzes their revival potential, and helps developers find their next open source contribution.
 
@@ -23,7 +23,7 @@ Kraven identifies repositories that:
 ## ✨ Features
 
 ### 🔍 **Dual Interface**
-- **🖥️ Web Interface**: Modern, responsive web app at [kraven.dev](https://yourusername.github.io/kraven/)
+- **🖥️ Web Interface**: Modern, responsive web app at [kraven.dev](https://twansolo.github.io/kraven/)
 - **⌨️ CLI Tool**: Powerful command-line interface for developers
 
 ### 🎯 **Smart Discovery**
@@ -46,7 +46,7 @@ Kraven identifies repositories that:
 ## 🚀 Quick Start
 
 ### 🌐 Web Interface (No Installation Required)
-Visit **[kraven.dev](https://yourusername.github.io/kraven/)** to start hunting immediately!
+Visit **[kraven.dev](https://twansolo.github.io/kraven/)** to start hunting immediately!
 
 ### ⌨️ CLI Installation
 ```bash
@@ -108,7 +108,7 @@ Kraven evaluates repositories based on:
 
 ```bash
 # Clone and setup
-git clone https://github.com/yourusername/kraven.git
+git clone https://github.com/twansolo/kraven.git
 cd kraven
 npm install
 
@@ -151,15 +151,15 @@ Developers using Kraven have successfully revived:
 
 We welcome contributions! Here's how you can help:
 
-1. **🐛 Report Issues**: Found a bug? [Open an issue](https://github.com/yourusername/kraven/issues)
-2. **💡 Suggest Features**: Have ideas? [Start a discussion](https://github.com/yourusername/kraven/discussions)
+1. **🐛 Report Issues**: Found a bug? [Open an issue](https://github.com/twansolo/kraven/issues)
+2. **💡 Suggest Features**: Have ideas? [Start a discussion](https://github.com/twansolo/kraven/discussions)
 3. **🔧 Submit PRs**: Fix bugs or add features
 4. **📖 Improve Docs**: Help make the documentation better
 5. **⭐ Star the Repo**: Show your support!
 
 ### Development Setup
 ```bash
-git clone https://github.com/yourusername/kraven.git
+git clone https://github.com/twansolo/kraven.git
 cd kraven
 npm install
 npm run build
@@ -168,11 +168,11 @@ npm link  # For global CLI testing
 
 ## 📊 **Repository Stats**
 
-![GitHub repo size](https://img.shields.io/github/repo-size/yourusername/kraven)
-![GitHub code size](https://img.shields.io/github/languages/code-size/yourusername/kraven)
-![GitHub last commit](https://img.shields.io/github/last-commit/yourusername/kraven)
-![GitHub issues](https://img.shields.io/github/issues/yourusername/kraven)
-![GitHub pull requests](https://img.shields.io/github/issues-pr/yourusername/kraven)
+![GitHub repo size](https://img.shields.io/github/repo-size/twansolo/kraven)
+![GitHub code size](https://img.shields.io/github/languages/code-size/twansolo/kraven)
+![GitHub last commit](https://img.shields.io/github/last-commit/twansolo/kraven)
+![GitHub issues](https://img.shields.io/github/issues/twansolo/kraven)
+![GitHub pull requests](https://img.shields.io/github/issues-pr/twansolo/kraven)
 
 ## 🏆 **Recognition**
 
@@ -183,15 +183,15 @@ npm link  # For global CLI testing
 
 ## 📱 **Connect & Share**
 
-- **🌐 Website**: [kraven.dev](https://yourusername.github.io/kraven/)
+- **🌐 Website**: [kraven.dev](https://twansolo.github.io/kraven/)
 - **📦 npm Package**: [npmjs.com/package/kraven](https://www.npmjs.com/package/kraven)
-- **🐙 GitHub**: [github.com/yourusername/kraven](https://github.com/yourusername/kraven)
-- **💬 Discussions**: [GitHub Discussions](https://github.com/yourusername/kraven/discussions)
-- **📧 Issues**: [Bug Reports](https://github.com/yourusername/kraven/issues)
+- **🐙 GitHub**: [github.com/twansolo/kraven](https://github.com/twansolo/kraven)
+- **💬 Discussions**: [GitHub Discussions](https://github.com/twansolo/kraven/discussions)
+- **📧 Issues**: [Bug Reports](https://github.com/twansolo/kraven/issues)
 
 ### Share Your Discoveries
 Found an amazing project with Kraven? Share it!
-- Tag us: `@yourusername` 
+- Tag us: `@twansolo` 
 - Use hashtag: `#KravenHunter`
 - Join discussions about revival projects
 
@@ -223,9 +223,9 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 *"With great power comes great responsibility... to revive abandoned code."*
 
-[![Made with ❤️](https://img.shields.io/badge/Made%20with-❤️-red.svg)](https://github.com/yourusername/kraven)
+[![Made with ❤️](https://img.shields.io/badge/Made%20with-❤️-red.svg)](https://github.com/twansolo/kraven)
 [![Powered by TypeScript](https://img.shields.io/badge/Powered%20by-TypeScript-blue.svg)](https://www.typescriptlang.org/)
 
-[⭐ **Star this repo**](https://github.com/yourusername/kraven/stargazers) • [🍴 **Fork it**](https://github.com/yourusername/kraven/fork) • [📢 **Share it**](https://twitter.com/intent/tweet?text=Check%20out%20Kraven%20-%20Hunt%20abandoned%20GitHub%20repositories%20ripe%20for%20revival!&url=https://github.com/yourusername/kraven)
+[⭐ **Star this repo**](https://github.com/twansolo/kraven/stargazers) • [🍴 **Fork it**](https://github.com/twansolo/kraven/fork) • [📢 **Share it**](https://twitter.com/intent/tweet?text=Check%20out%20Kraven%20-%20Hunt%20abandoned%20GitHub%20repositories%20ripe%20for%20revival!&url=https://github.com/twansolo/kraven)
 
 </div>

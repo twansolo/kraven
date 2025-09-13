@@ -14,8 +14,8 @@
 ### 2. Connect Local Repository to GitHub
 
 ```bash
-# Add GitHub remote (replace 'yourusername' with your GitHub username)
-git remote add origin https://github.com/yourusername/kraven.git
+# Add GitHub remote (replace 'twansolo' with your GitHub username)
+git remote add origin https://github.com/twansolo/kraven.git
 
 # Push to GitHub
 git branch -M main
@@ -36,7 +36,7 @@ git push -u origin main
 
 Your Kraven web interface will be available at:
 ```
-https://yourusername.github.io/kraven/
+https://twansolo.github.io/kraven/
 ```
 
 ## Configuration Steps
@@ -45,7 +45,7 @@ https://yourusername.github.io/kraven/
 
 1. **Edit `docs/index.html`**:
    - Update footer links to point to your repository
-   - Replace `yourusername` with your GitHub username
+   - Replace `twansolo` with your GitHub username
 
 2. **Edit `docs/_config.yml`**:
    - Update `url` and `baseurl` with your GitHub username
@@ -60,7 +60,7 @@ If you want a custom domain like `kraven.yourdomain.com`:
    ```
 
 2. **Configure DNS**:
-   - Add CNAME record: `kraven` → `yourusername.github.io`
+   - Add CNAME record: `kraven` → `twansolo.github.io`
 
 3. **Update GitHub Pages settings**:
    - Go to Settings → Pages
