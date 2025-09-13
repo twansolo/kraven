@@ -1,0 +1,290 @@
+#!/usr/bin/env node
+
+import { Command } from 'commander';
+import chalk from 'chalk';
+import ora from 'ora';
+import * as dotenv from 'dotenv';
+import * as path from 'path';
+import * as fs from 'fs';
+import { KravenHunter } from './kraven';
+import { SearchFilters, ProjectCategory } from './types';
+
+// Load environment variables from multiple locations
+function loadEnvironmentVariables() {
+  // First try current working directory
+  dotenv.config();
+  
+  // If no GITHUB_TOKEN found, try the kraven installation directory
+  if (!process.env.GITHUB_TOKEN) {
+    // This file is compiled to dist/cli.js, so we need to go up to the project root
+    // __dirname points to dist/ folder, so go up one level to get project root
+    const kravenDir = path.join(__dirname, '..');
+    const kravenEnvPath = path.join(kravenDir, '.env');
+    
+    if (fs.existsSync(kravenEnvPath)) {
+      dotenv.config({ path: kravenEnvPath });
+    }
+  }
+}
+
+// Load environment variables
+loadEnvironmentVariables();
+
+const program = new Command();
+
+program
+  .name('kraven')
+  .description('🕷️ Hunt abandoned GitHub repositories ripe for revival')
+  .version('1.0.0');
+
+// Hunt command
+program
+  .command('hunt')
+  .description('Search for abandoned repositories')
+  .option('-l, --language <language>', 'Programming language (e.g., typescript, javascript)')
+  .option('-c, --category <category>', 'Project category (cli-tool, build-tool, dev-tool, etc.)')
+  .option('--min-stars <number>', 'Minimum star count', parseInt)
+  .option('--max-stars <number>', 'Maximum star count', parseInt)
+  .option('--pushed-before <date>', 'Last push before date (YYYY-MM-DD)')
+  .option('--pushed-after <date>', 'Last push after date (YYYY-MM-DD)')
+  .option('--sort <field>', 'Sort by: stars, updated, created', 'stars')
+  .option('--order <direction>', 'Sort order: asc, desc', 'desc')
+  .option('--limit <number>', 'Maximum results to analyze', parseInt, 10)
+  .option('--output <format>', 'Output format: table, json, markdown', 'table')
+  .action(async (options) => {
+    const spinner = ora('🕷️ Kraven is hunting...').start();
+    
+    try {
+      const filters: SearchFilters = {
+        language: options.language,
+        category: options.category as ProjectCategory,
+        minStars: options.minStars,
+        maxStars: options.maxStars,
+        pushedBefore: options.pushedBefore,
+        pushedAfter: options.pushedAfter,
+        sort: options.sort,
+        order: options.order
+      };
+
+      const kraven = new KravenHunter();
+      const results = await kraven.hunt(filters, options.limit);
+      
+      spinner.stop();
+      
+      console.log(chalk.green(`\n🎯 Found ${results.totalFound} repositories, analyzed ${results.analyzed.length}\n`));
+      
+      if (options.output === 'json') {
+        console.log(JSON.stringify(results, null, 2));
+      } else if (options.output === 'markdown') {
+        printMarkdownResults(results.analyzed);
+      } else {
+        printTableResults(results.analyzed);
+      }
+      
+    } catch (error) {
+      spinner.stop();
+      console.error(chalk.red('❌ Hunt failed:'), error instanceof Error ? error.message : error);
+      process.exit(1);
+    }
+  });
+
+// Analyze command
+program
+  .command('analyze <repository>')
+  .description('Analyze a specific repository (format: owner/repo)')
+  .option('--output <format>', 'Output format: table, json, markdown', 'table')
+  .action(async (repository, options) => {
+    const spinner = ora(`🔍 Analyzing ${repository}...`).start();
+    
+    try {
+      const kraven = new KravenHunter();
+      const analysis = await kraven.analyzeRepository(repository);
+      
+      spinner.stop();
+      
+      if (options.output === 'json') {
+        console.log(JSON.stringify(analysis, null, 2));
+      } else if (options.output === 'markdown') {
+        printMarkdownAnalysis(analysis);
+      } else {
+        printTableAnalysis(analysis);
+      }
+      
+    } catch (error) {
+      spinner.stop();
+      console.error(chalk.red('❌ Analysis failed:'), error instanceof Error ? error.message : error);
+      process.exit(1);
+    }
+  });
+
+// Rate limit command
+program
+  .command('rate-limit')
+  .description('Check GitHub API rate limit status')
+  .action(async () => {
+    try {
+      const kraven = new KravenHunter();
+      const rateLimit = await kraven.checkRateLimit();
+      
+      console.log(chalk.blue('📊 GitHub API Rate Limit Status:'));
+      console.log(`Remaining: ${rateLimit.rate.remaining}/${rateLimit.rate.limit}`);
+      console.log(`Resets at: ${new Date(rateLimit.rate.reset * 1000).toLocaleString()}`);
+      
+    } catch (error) {
+      console.error(chalk.red('❌ Failed to check rate limit:'), error instanceof Error ? error.message : error);
+      process.exit(1);
+    }
+  });
+
+function printTableResults(analyses: any[]) {
+  if (analyses.length === 0) {
+    console.log(chalk.yellow('No repositories found matching criteria.'));
+    return;
+  }
+
+  console.log(chalk.bold('Repository'.padEnd(40)) + 
+              chalk.bold('Stars'.padEnd(8)) + 
+              chalk.bold('Abandon'.padEnd(10)) + 
+              chalk.bold('Revival'.padEnd(10)) + 
+              chalk.bold('Last Commit'.padEnd(15)) + 
+              chalk.bold('Status'));
+  
+  console.log('─'.repeat(90));
+  
+  analyses.forEach(analysis => {
+    const repo = analysis.repository;
+    const name = repo.full_name.length > 38 ? repo.full_name.substring(0, 35) + '...' : repo.full_name;
+    const stars = repo.stargazers_count.toString();
+    const abandon = `${analysis.abandonmentScore}%`;
+    const revival = `${analysis.revivalPotential}%`;
+    const lastCommit = `${analysis.lastCommitAge}d ago`;
+    
+    let status = '';
+    if (analysis.abandonmentScore > 70 && analysis.revivalPotential > 60) {
+      status = chalk.green('🎯 PRIME');
+    } else if (analysis.abandonmentScore > 50 && analysis.revivalPotential > 40) {
+      status = chalk.yellow('⚠️  MAYBE');
+    } else {
+      status = chalk.red('❌ SKIP');
+    }
+    
+    console.log(
+      name.padEnd(40) +
+      stars.padEnd(8) +
+      abandon.padEnd(10) +
+      revival.padEnd(10) +
+      lastCommit.padEnd(15) +
+      status
+    );
+  });
+}
+
+function printMarkdownResults(analyses: any[]) {
+  console.log('# 🕷️ Kraven Hunt Results\n');
+  
+  analyses.forEach(analysis => {
+    const repo = analysis.repository;
+    console.log(`## [${repo.full_name}](${repo.html_url})\n`);
+    console.log(`**Description:** ${repo.description || 'No description'}\n`);
+    console.log(`**Language:** ${repo.language || 'Unknown'} | **Stars:** ${repo.stargazers_count} | **Forks:** ${repo.forks_count}\n`);
+    console.log(`**Abandonment Score:** ${analysis.abandonmentScore}% | **Revival Potential:** ${analysis.revivalPotential}%\n`);
+    console.log(`**Last Commit:** ${analysis.lastCommitAge} days ago\n`);
+    
+    if (analysis.reasons.length > 0) {
+      console.log('**Abandonment Indicators:**');
+      analysis.reasons.forEach((reason: string) => console.log(`- ${reason}`));
+      console.log('');
+    }
+    
+    if (analysis.recommendations.length > 0) {
+      console.log('**Revival Recommendations:**');
+      analysis.recommendations.forEach((rec: string) => console.log(`- ${rec}`));
+      console.log('');
+    }
+    
+    console.log('---\n');
+  });
+}
+
+function printTableAnalysis(analysis: any) {
+  const repo = analysis.repository;
+  
+  console.log(chalk.blue.bold(`\n📊 Analysis: ${repo.full_name}\n`));
+  
+  console.log(chalk.bold('Basic Information:'));
+  console.log(`URL: ${repo.html_url}`);
+  console.log(`Description: ${repo.description || 'No description'}`);
+  console.log(`Language: ${repo.language || 'Unknown'}`);
+  console.log(`Created: ${new Date(repo.created_at).toLocaleDateString()}`);
+  console.log(`Last Push: ${new Date(repo.pushed_at).toLocaleDateString()}`);
+  
+  console.log(chalk.bold('\nMetrics:'));
+  console.log(`Stars: ${repo.stargazers_count}`);
+  console.log(`Forks: ${repo.forks_count}`);
+  console.log(`Open Issues: ${repo.open_issues_count}`);
+  console.log(`Size: ${repo.size} KB`);
+  
+  console.log(chalk.bold('\nScores:'));
+  console.log(`Abandonment Score: ${analysis.abandonmentScore}%`);
+  console.log(`Revival Potential: ${analysis.revivalPotential}%`);
+  console.log(`Community Engagement: ${analysis.communityEngagement}%`);
+  console.log(`Market Relevance: ${analysis.marketRelevance}%`);
+  
+  console.log(chalk.bold('\nTiming:'));
+  console.log(`Last Commit: ${analysis.lastCommitAge} days ago`);
+  console.log(`Avg Issue Response: ${analysis.issueResponseTime > 0 ? `${Math.round(analysis.issueResponseTime)} days` : 'Unknown'}`);
+  
+  console.log(chalk.bold('\nAssessment:'));
+  console.log(`Technical Complexity: ${analysis.technicalComplexity}`);
+  console.log(`Dependency Health: ${analysis.dependencyHealth}`);
+  
+  if (analysis.reasons.length > 0) {
+    console.log(chalk.bold('\nAbandonment Indicators:'));
+    analysis.reasons.forEach((reason: string) => console.log(`• ${reason}`));
+  }
+  
+  if (analysis.recommendations.length > 0) {
+    console.log(chalk.bold('\nRevival Recommendations:'));
+    analysis.recommendations.forEach((rec: string) => console.log(`• ${rec}`));
+  }
+}
+
+function printMarkdownAnalysis(analysis: any) {
+  const repo = analysis.repository;
+  
+  console.log(`# 🕷️ Repository Analysis: ${repo.full_name}\n`);
+  console.log(`[View on GitHub](${repo.html_url})\n`);
+  console.log(`**Description:** ${repo.description || 'No description'}\n`);
+  
+  console.log('## 📊 Metrics\n');
+  console.log(`| Metric | Value |`);
+  console.log(`|--------|-------|`);
+  console.log(`| Stars | ${repo.stargazers_count} |`);
+  console.log(`| Forks | ${repo.forks_count} |`);
+  console.log(`| Open Issues | ${repo.open_issues_count} |`);
+  console.log(`| Language | ${repo.language || 'Unknown'} |`);
+  console.log(`| Size | ${repo.size} KB |`);
+  console.log(`| Last Commit | ${analysis.lastCommitAge} days ago |\n`);
+  
+  console.log('## 🎯 Scores\n');
+  console.log(`| Score | Value |`);
+  console.log(`|-------|-------|`);
+  console.log(`| Abandonment Score | ${analysis.abandonmentScore}% |`);
+  console.log(`| Revival Potential | ${analysis.revivalPotential}% |`);
+  console.log(`| Community Engagement | ${analysis.communityEngagement}% |`);
+  console.log(`| Market Relevance | ${analysis.marketRelevance}% |\n`);
+  
+  if (analysis.reasons.length > 0) {
+    console.log('## ⚠️ Abandonment Indicators\n');
+    analysis.reasons.forEach((reason: string) => console.log(`- ${reason}`));
+    console.log('');
+  }
+  
+  if (analysis.recommendations.length > 0) {
+    console.log('## 💡 Revival Recommendations\n');
+    analysis.recommendations.forEach((rec: string) => console.log(`- ${rec}`));
+    console.log('');
+  }
+}
+
+program.parse();

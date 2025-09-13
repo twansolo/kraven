@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🕷️ Kraven - Hunt Abandoned GitHub Projects</title>
+    <meta name="description" content="Discover abandoned GitHub repositories ripe for revival. Find unmaintained projects with active communities waiting for new maintainers.">
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="hero">
+                <h1 class="hero-title">
+                    <span class="spider">🕷️</span>
+                    <span class="title-text">Kraven</span>
+                </h1>
+                <p class="hero-subtitle">Hunt Abandoned GitHub Projects</p>
+                <p class="hero-description">
+                    Discover unmaintained repositories with active communities waiting for new maintainers.
+                    Find your next open source project to revive and maintain.
+                </p>
+            </div>
+        </header>
+
+        <!-- Search Form -->
+        <section class="search-section">
+            <div class="search-container">
+                <h2><i class="fas fa-search"></i> Hunt for Projects</h2>
+                
+                <form id="searchForm" class="search-form">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="language">Programming Language</label>
+                            <select id="language" name="language">
+                                <option value="">Any Language</option>
+                                <option value="javascript">JavaScript</option>
+                                <option value="typescript">TypeScript</option>
+                                <option value="python">Python</option>
+                                <option value="java">Java</option>
+                                <option value="go">Go</option>
+                                <option value="rust">Rust</option>
+                                <option value="cpp">C++</option>
+                                <option value="csharp">C#</option>
+                                <option value="php">PHP</option>
+                                <option value="ruby">Ruby</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="category">Project Category</label>
+                            <select id="category" name="category">
+                                <option value="">Any Category</option>
+                                <option value="cli-tool">CLI Tools</option>
+                                <option value="build-tool">Build Tools</option>
+                                <option value="dev-tool">Developer Tools</option>
+                                <option value="testing">Testing Frameworks</option>
+                                <option value="linter">Code Quality</option>
+                                <option value="framework">Frameworks</option>
+                                <option value="library">Libraries</option>
+                                <option value="plugin">Plugins</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="minStars">Minimum Stars</label>
+                            <input type="number" id="minStars" name="minStars" placeholder="e.g. 100" min="0">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="maxStars">Maximum Stars</label>
+                            <input type="number" id="maxStars" name="maxStars" placeholder="e.g. 5000" min="0">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="pushedBefore">Last Updated Before</label>
+                            <input type="date" id="pushedBefore" name="pushedBefore">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="githubToken">GitHub Token (Optional)</label>
+                            <input type="password" id="githubToken" name="githubToken" placeholder="ghp_... (for higher rate limits)">
+                            <small>Increases rate limit from 60 to 5000 requests/hour</small>
+                        </div>
+                    </div>
+
+                    <div class="search-actions">
+                        <button type="submit" class="btn btn-primary" id="searchBtn">
+                            <i class="fas fa-spider"></i>
+                            Start Hunting
+                        </button>
+                        <button type="button" class="btn btn-secondary" id="clearBtn">
+                            <i class="fas fa-eraser"></i>
+                            Clear
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- Loading -->
+        <div id="loading" class="loading hidden">
+            <div class="spinner"></div>
+            <p>🕷️ Kraven is hunting for abandoned projects...</p>
+        </div>
+
+        <!-- Results -->
+        <section id="results" class="results-section hidden">
+            <div class="results-header">
+                <h2><i class="fas fa-trophy"></i> Hunt Results</h2>
+                <div class="results-stats">
+                    <span id="resultsCount">0 repositories found</span>
+                    <div class="results-actions">
+                        <button class="btn btn-small" id="exportJson">
+                            <i class="fas fa-download"></i> Export JSON
+                        </button>
+                        <button class="btn btn-small" id="sortResults">
+                            <i class="fas fa-sort"></i> Sort by Revival Potential
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="resultsContainer" class="results-container">
+                <!-- Results will be populated here -->
+            </div>
+        </section>
+
+        <!-- Rate Limit Info -->
+        <div id="rateLimitInfo" class="rate-limit-info">
+            <i class="fas fa-tachometer-alt"></i>
+            <span id="rateLimitText">Rate limit: Unknown</span>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>🕷️ Kraven</h3>
+                    <p>Hunt abandoned GitHub projects and give them new life.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Resources</h4>
+                    <ul>
+                        <li><a href="https://github.com/yourusername/kraven">GitHub Repository</a></li>
+                        <li><a href="https://github.com/settings/tokens">Create GitHub Token</a></li>
+                        <li><a href="#examples">Usage Examples</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>CLI Tool</h4>
+                    <p>Also available as a command-line tool:</p>
+                    <code>npm install -g kraven</code>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 Kraven Project Hunter. Built with ❤️ for open source.</p>
+            </div>
+        </footer>
+    </div>
+
+    <script src="js/github-api.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
