@@ -1,10 +1,14 @@
-# 🕷️ Kraven - The Abandoned Project Hunter
+<div align="center">
+  <img src="kraven.png" alt="Kraven Logo" width="200" height="200">
+  
+  # 🕷️ Kraven - The Abandoned Project Hunter
 
-[![npm version](https://badge.fury.io/js/kraven.svg)](https://badge.fury.io/js/kraven)
-[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live-brightgreen)](https://twansolo.github.io/kraven/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![GitHub stars](https://img.shields.io/github/stars/twansolo/kraven?style=social)](https://github.com/twansolo/kraven/stargazers)
+  [![npm version](https://badge.fury.io/js/kraven.svg)](https://badge.fury.io/js/kraven)
+  [![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live-brightgreen)](https://twansolo.github.io/kraven/)
+  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+  [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+  [![GitHub stars](https://img.shields.io/github/stars/twansolo/kraven?style=social)](https://github.com/twansolo/kraven/stargazers)
+</div>
 
 > 🕷️ **Hunt abandoned GitHub repositories ripe for revival.** Kraven discovers unmaintained projects with active communities, analyzes their revival potential, and helps developers find their next open source contribution.
 

@@ -4,6 +4,7 @@ tagline: "Hunt Abandoned GitHub Projects"
 description: "Discover unmaintained repositories with active communities waiting for new maintainers. Find your next open source project to revive."
 url: "https://twansolo.github.io"
 baseurl: "/kraven"
+logo: "/kraven.png"
 
 # Site settings
 author:
