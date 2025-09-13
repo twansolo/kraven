@@ -27,6 +27,25 @@
       
       .main-content {
         max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 1rem;
+      }
+      
+      .content-container {
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: 12px;
+        padding: 2rem;
+        margin: 2rem 0;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      }
+      
+      .footer-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 1rem;
+        text-align: center;
       }
       
       .page-header {
@@ -188,6 +207,110 @@
         color: white;
       }
       
+      /* Content Typography */
+      .content-container h1 {
+        color: var(--kraven-primary);
+        font-size: 2.5rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid var(--kraven-primary);
+        padding-bottom: 0.5rem;
+      }
+      
+      .content-container h2 {
+        color: var(--kraven-secondary);
+        font-size: 2rem;
+        margin: 2rem 0 1rem 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      
+      .content-container h3 {
+        color: #fff;
+        font-size: 1.5rem;
+        margin: 1.5rem 0 1rem 0;
+      }
+      
+      .content-container p {
+        margin-bottom: 1.2rem;
+        line-height: 1.7;
+        color: rgba(255, 255, 255, 0.9);
+      }
+      
+      .content-container ul, .content-container ol {
+        margin-bottom: 1.2rem;
+        padding-left: 2rem;
+      }
+      
+      .content-container li {
+        margin-bottom: 0.5rem;
+        color: rgba(255, 255, 255, 0.9);
+      }
+      
+      .content-container code {
+        background: rgba(255, 107, 53, 0.1);
+        color: var(--kraven-primary);
+        padding: 0.2rem 0.4rem;
+        border-radius: 4px;
+        font-family: 'Courier New', monospace;
+      }
+      
+      .content-container pre {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        padding: 1rem;
+        overflow-x: auto;
+        margin: 1rem 0;
+      }
+      
+      .content-container pre code {
+        background: none;
+        color: #fff;
+        padding: 0;
+      }
+      
+      .content-container a {
+        color: var(--kraven-primary);
+        text-decoration: none;
+        transition: all 0.3s ease;
+      }
+      
+      .content-container a:hover {
+        color: var(--kraven-secondary);
+        text-decoration: underline;
+      }
+      
+      .content-container blockquote {
+        border-left: 4px solid var(--kraven-primary);
+        padding-left: 1rem;
+        margin: 1rem 0;
+        font-style: italic;
+        color: rgba(255, 255, 255, 0.8);
+      }
+      
+      .content-container table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      
+      .content-container th,
+      .content-container td {
+        padding: 0.75rem;
+        text-align: left;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      
+      .content-container th {
+        background: var(--kraven-primary);
+        color: white;
+        font-weight: 600;
+      }
+      
       @media (max-width: 768px) {
         .project-name {
           font-size: 2.5rem;
@@ -205,6 +328,19 @@
         
         .feature-grid {
           grid-template-columns: 1fr;
+        }
+        
+        .content-container {
+          padding: 1rem;
+          margin: 1rem 0;
+        }
+        
+        .content-container h1 {
+          font-size: 2rem;
+        }
+        
+        .content-container h2 {
+          font-size: 1.5rem;
         }
       }
     </style>
@@ -235,18 +371,22 @@
     {% include navigation.html %}
 
     <main id="content" class="main-content" role="main">
-      {{ content }}
+      <div class="content-container">
+        {{ content }}
+      </div>
 
       <footer class="site-footer">
-        {% if site.github.is_project_page %}
-          <span class="site-footer-owner"><a href="{{ site.github.repository_url }}">{{ site.github.repository_name }}</a> is maintained by <a href="{{ site.github.owner_url }}">{{ site.github.owner_name }}</a>.</span>
-        {% endif %}
-        <span class="site-footer-credits">
-          Made with ❤️ for the open source community. 
-          <a href="https://pages.github.com">GitHub Pages</a> • 
-          <a href="https://jekyllrb.com/">Jekyll</a> • 
-          <a href="{{ site.github.repository_url }}">Source Code</a>
-        </span>
+        <div class="footer-container">
+          {% if site.github.is_project_page %}
+            <span class="site-footer-owner"><a href="{{ site.github.repository_url }}">{{ site.github.repository_name }}</a> is maintained by <a href="{{ site.github.owner_url }}">{{ site.github.owner_name }}</a>.</span>
+          {% endif %}
+          <span class="site-footer-credits">
+            Made with ❤️ for the open source community. 
+            <a href="https://pages.github.com">GitHub Pages</a> • 
+            <a href="https://jekyllrb.com/">Jekyll</a> • 
+            <a href="{{ site.github.repository_url }}">Source Code</a>
+          </span>
+        </div>
       </footer>
     </main>
   </body>
