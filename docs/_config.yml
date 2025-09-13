@@ -1,0 +1,28 @@
+# GitHub Pages Configuration for Kraven
+title: "Kraven - Hunt Abandoned GitHub Projects"
+description: "Discover unmaintained repositories with active communities waiting for new maintainers"
+url: "https://yourusername.github.io"
+baseurl: "/kraven"
+
+# Theme
+theme: minima
+
+# Plugins
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+
+# Exclude files from processing
+exclude:
+  - node_modules/
+  - package.json
+  - package-lock.json
+  - tsconfig.json
+  - src/
+  - dist/
+  - .gitignore
+  - README.md
+
+# Include files
+include:
+  - _pages
