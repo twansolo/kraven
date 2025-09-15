@@ -1,8 +1,13 @@
-import { GitHubRepository, RepositoryAnalysis } from '../types';
+import { GitHubRepository, RepositoryAnalysis, DependencyAnalysis } from '../types';
 import { GitHubService } from './github';
+import { DependencyAnalyzer } from './dependency-analyzer';
 
 export class RepositoryAnalyzer {
-  constructor(private githubService: GitHubService) {}
+  private dependencyAnalyzer: DependencyAnalyzer;
+
+  constructor(private githubService: GitHubService) {
+    this.dependencyAnalyzer = new DependencyAnalyzer(githubService);
+  }
 
   /**
    * Analyze a repository for abandonment and revival potential
@@ -22,12 +27,16 @@ export class RepositoryAnalyzer {
     // Calculate metrics
     const lastCommitAge = this.calculateLastCommitAge(repo.pushed_at);
     const abandonmentScore = this.calculateAbandonmentScore(repo, issuesData, commitsData);
-    const revivalPotential = this.calculateRevivalPotential(repo, issuesData);
+    
+    // Perform dependency analysis
+    const dependencyAnalysis = await this.dependencyAnalyzer.analyzeDependencies(owner, name);
+    const dependencyHealth = dependencyAnalysis.dependencyHealth;
+    
+    const revivalPotential = this.calculateRevivalPotential(repo, issuesData, dependencyHealth);
     const issueResponseTime = this.calculateIssueResponseTime(issuesData);
     const communityEngagement = this.calculateCommunityEngagement(repo, issuesData);
     const technicalComplexity = this.assessTechnicalComplexity(repo);
     const marketRelevance = this.assessMarketRelevance(repo);
-    const dependencyHealth = await this.assessDependencyHealth(owner, name);
 
     // Generate insights
     const reasons = this.generateAbandonmentReasons(repo, lastCommitAge, issuesData);
@@ -40,6 +49,7 @@ export class RepositoryAnalyzer {
       lastCommitAge,
       issueResponseTime,
       dependencyHealth,
+      dependencyAnalysis,
       communityEngagement,
       technicalComplexity,
       marketRelevance,
@@ -102,7 +112,7 @@ export class RepositoryAnalyzer {
   /**
    * Calculate revival potential score (0-100, higher = better candidate)
    */
-  private calculateRevivalPotential(repo: GitHubRepository, issues: any[]): number {
+  private calculateRevivalPotential(repo: GitHubRepository, issues: any[], dependencyHealth?: string): number {
     let score = 0;
 
     // Community interest (0-30 points)
@@ -136,7 +146,18 @@ export class RepositoryAnalyzer {
     if (repo.size > 100 && repo.size < 10000) score += 10; // Not too small, not too large
     else if (repo.size > 50) score += 5;
 
-    return Math.min(score, 100);
+    // Dependency health bonus/penalty (0-10 points)
+    if (dependencyHealth) {
+      switch (dependencyHealth) {
+        case 'excellent': score += 10; break;
+        case 'good': score += 5; break;
+        case 'fair': break; // neutral
+        case 'poor': score -= 5; break;
+        case 'critical': score -= 10; break;
+      }
+    }
+
+    return Math.min(Math.max(score, 0), 100);
   }
 
   /**
@@ -216,18 +237,6 @@ export class RepositoryAnalyzer {
     return Math.max(0, Math.min(score, 100));
   }
 
-  /**
-   * Assess dependency health (simplified - would need package.json analysis)
-   */
-  private async assessDependencyHealth(owner: string, repo: string): Promise<'good' | 'outdated' | 'vulnerable' | 'unknown'> {
-    // This is a placeholder - in a real implementation, you'd:
-    // 1. Fetch package.json or similar dependency files
-    // 2. Check for outdated packages
-    // 3. Check for known vulnerabilities
-    // 4. Use tools like npm audit or similar
-    
-    return 'unknown';
-  }
 
   /**
    * Generate reasons for abandonment classification

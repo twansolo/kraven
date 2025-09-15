@@ -11,19 +11,33 @@ import { SearchFilters, ProjectCategory } from './types';
 
 // Load environment variables from multiple locations
 function loadEnvironmentVariables() {
-  // First try current working directory
-  dotenv.config();
+  // Suppress dotenv output for clean JSON
+  const originalConsoleLog = console.log;
+  const originalConsoleError = console.error;
   
-  // If no GITHUB_TOKEN found, try the kraven installation directory
-  if (!process.env.GITHUB_TOKEN) {
-    // This file is compiled to dist/cli.js, so we need to go up to the project root
-    // __dirname points to dist/ folder, so go up one level to get project root
-    const kravenDir = path.join(__dirname, '..');
-    const kravenEnvPath = path.join(kravenDir, '.env');
+  // Temporarily suppress console output
+  console.log = () => {};
+  console.error = () => {};
+  
+  try {
+    // First try current working directory
+    dotenv.config({ debug: false });
     
-    if (fs.existsSync(kravenEnvPath)) {
-      dotenv.config({ path: kravenEnvPath });
+    // If no GITHUB_TOKEN found, try the kraven installation directory
+    if (!process.env.GITHUB_TOKEN) {
+      // This file is compiled to dist/cli.js, so we need to go up to the project root
+      // __dirname points to dist/ folder, so go up one level to get project root
+      const kravenDir = path.join(__dirname, '..');
+      const kravenEnvPath = path.join(kravenDir, '.env');
+      
+      if (fs.existsSync(kravenEnvPath)) {
+        dotenv.config({ path: kravenEnvPath, debug: false });
+      }
     }
+  } finally {
+    // Restore console output
+    console.log = originalConsoleLog;
+    console.error = originalConsoleError;
   }
 }
 
@@ -51,8 +65,10 @@ program
   .option('--order <direction>', 'Sort order: asc, desc', 'desc')
   .option('--limit <number>', 'Maximum results to analyze', parseInt, 10)
   .option('--output <format>', 'Output format: table, json, markdown', 'table')
+  .option('--skip-dependencies', 'Skip dependency analysis (faster but less detailed)', false)
   .action(async (options) => {
-    const spinner = ora('🕷️ Kraven is hunting...').start();
+    // Only show spinner for non-JSON output to keep JSON clean
+    const spinner = options.output === 'json' ? null : ora('🕷️ Kraven is hunting...').start();
     
     try {
       const filters: SearchFilters = {
@@ -69,20 +85,23 @@ program
       const kraven = new KravenHunter();
       const results = await kraven.hunt(filters, options.limit);
       
-      spinner.stop();
-      
-      console.log(chalk.green(`\n🎯 Found ${results.totalFound} repositories, analyzed ${results.analyzed.length}\n`));
+      if (spinner) spinner.stop();
       
       if (options.output === 'json') {
+        // For JSON output, only output the JSON (no other messages)
         console.log(JSON.stringify(results, null, 2));
-      } else if (options.output === 'markdown') {
-        printMarkdownResults(results.analyzed);
       } else {
-        printTableResults(results.analyzed);
+        console.log(chalk.green(`\n🎯 Found ${results.totalFound} repositories, analyzed ${results.analyzed.length}\n`));
+        
+        if (options.output === 'markdown') {
+          printMarkdownResults(results.analyzed);
+        } else {
+          printTableResults(results.analyzed);
+        }
       }
       
     } catch (error) {
-      spinner.stop();
+      if (spinner) spinner.stop();
       console.error(chalk.red('❌ Hunt failed:'), error instanceof Error ? error.message : error);
       process.exit(1);
     }
@@ -142,22 +161,38 @@ function printTableResults(analyses: any[]) {
     return;
   }
 
-  console.log(chalk.bold('Repository'.padEnd(40)) + 
+  console.log(chalk.bold('Repository'.padEnd(35)) + 
               chalk.bold('Stars'.padEnd(8)) + 
               chalk.bold('Abandon'.padEnd(10)) + 
               chalk.bold('Revival'.padEnd(10)) + 
+              chalk.bold('Deps'.padEnd(10)) + 
               chalk.bold('Last Commit'.padEnd(15)) + 
               chalk.bold('Status'));
   
-  console.log('─'.repeat(90));
+  console.log('─'.repeat(100));
   
   analyses.forEach(analysis => {
     const repo = analysis.repository;
-    const name = repo.full_name.length > 38 ? repo.full_name.substring(0, 35) + '...' : repo.full_name;
+    const name = repo.full_name.length > 33 ? repo.full_name.substring(0, 30) + '...' : repo.full_name;
     const stars = repo.stargazers_count.toString();
     const abandon = `${analysis.abandonmentScore}%`;
     const revival = `${analysis.revivalPotential}%`;
     const lastCommit = `${analysis.lastCommitAge}d ago`;
+    
+    // Dependency health indicator
+    let depsIndicator = '❓';
+    if (analysis.dependencyAnalysis) {
+      switch (analysis.dependencyHealth) {
+        case 'excellent': depsIndicator = chalk.green('✅'); break;
+        case 'good': depsIndicator = chalk.green('👍'); break;
+        case 'fair': depsIndicator = chalk.yellow('⚠️'); break;
+        case 'poor': depsIndicator = chalk.red('👎'); break;
+        case 'critical': depsIndicator = chalk.red('🚨'); break;
+        default: depsIndicator = chalk.gray('❓'); break;
+      }
+    } else {
+      depsIndicator = chalk.gray('❓');
+    }
     
     let status = '';
     if (analysis.abandonmentScore > 70 && analysis.revivalPotential > 60) {
@@ -169,10 +204,11 @@ function printTableResults(analyses: any[]) {
     }
     
     console.log(
-      name.padEnd(40) +
+      name.padEnd(35) +
       stars.padEnd(8) +
       abandon.padEnd(10) +
       revival.padEnd(10) +
+      (depsIndicator + '     ').substring(0, 10) +
       lastCommit.padEnd(15) +
       status
     );
@@ -229,6 +265,7 @@ function printTableAnalysis(analysis: any) {
   console.log(`Revival Potential: ${analysis.revivalPotential}%`);
   console.log(`Community Engagement: ${analysis.communityEngagement}%`);
   console.log(`Market Relevance: ${analysis.marketRelevance}%`);
+  console.log(`Dependency Health: ${analysis.dependencyHealth}`);
   
   console.log(chalk.bold('\nTiming:'));
   console.log(`Last Commit: ${analysis.lastCommitAge} days ago`);
@@ -237,6 +274,22 @@ function printTableAnalysis(analysis: any) {
   console.log(chalk.bold('\nAssessment:'));
   console.log(`Technical Complexity: ${analysis.technicalComplexity}`);
   console.log(`Dependency Health: ${analysis.dependencyHealth}`);
+
+  // Show detailed dependency information if available
+  if (analysis.dependencyAnalysis && analysis.dependencyAnalysis.totalDependencies > 0) {
+    console.log(chalk.bold('\nDependency Details:'));
+    const deps = analysis.dependencyAnalysis;
+    console.log(`Total Dependencies: ${deps.totalDependencies}`);
+    console.log(`Outdated: ${deps.outdatedDependencies} (${Math.round((deps.outdatedDependencies / deps.totalDependencies) * 100)}%)`);
+    console.log(`With Vulnerabilities: ${deps.vulnerableDependencies}`);
+    console.log(`Critical Vulnerabilities: ${deps.criticalVulnerabilities}`);
+    console.log(`Health Score: ${deps.healthScore}/100`);
+    
+    if (deps.recommendations.length > 0) {
+      console.log(chalk.bold('\nDependency Recommendations:'));
+      deps.recommendations.forEach((rec: string) => console.log(`• ${rec}`));
+    }
+  }
   
   if (analysis.reasons.length > 0) {
     console.log(chalk.bold('\nAbandonment Indicators:'));

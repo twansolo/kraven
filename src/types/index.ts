@@ -39,7 +39,8 @@ export interface RepositoryAnalysis {
   revivalPotential: number;
   lastCommitAge: number; // days
   issueResponseTime: number; // average days
-  dependencyHealth: 'good' | 'outdated' | 'vulnerable' | 'unknown';
+  dependencyHealth: 'excellent' | 'good' | 'fair' | 'poor' | 'critical' | 'unknown';
+  dependencyAnalysis?: DependencyAnalysis;
   communityEngagement: number; // 0-100
   technicalComplexity: 'low' | 'medium' | 'high';
   marketRelevance: number; // 0-100
@@ -79,10 +80,43 @@ export interface HuntResults {
   timestamp: string;
 }
 
+// Dependency analysis types
+export interface DependencyInfo {
+  name: string;
+  currentVersion: string;
+  latestVersion?: string;
+  isOutdated: boolean;
+  vulnerabilities: Vulnerability[];
+  securityScore: number; // 0-100
+  type: 'dependency' | 'devDependency' | 'peerDependency';
+}
+
+export interface Vulnerability {
+  severity: 'low' | 'moderate' | 'high' | 'critical';
+  title: string;
+  description: string;
+  patchedVersions?: string;
+  vulnerableVersions: string;
+  source: 'npm' | 'github' | 'snyk';
+}
+
+export interface DependencyAnalysis {
+  totalDependencies: number;
+  outdatedDependencies: number;
+  vulnerableDependencies: number;
+  criticalVulnerabilities: number;
+  dependencyHealth: 'excellent' | 'good' | 'fair' | 'poor' | 'critical';
+  healthScore: number; // 0-100
+  dependencies: DependencyInfo[];
+  recommendations: string[];
+  lastUpdated?: Date;
+}
+
 export interface KravenConfig {
   githubToken?: string;
   defaultFilters: SearchFilters;
   outputFormat: 'json' | 'table' | 'markdown';
   maxResults: number;
   analysisDepth: 'basic' | 'detailed' | 'comprehensive';
+  dependencyAnalysis?: boolean;
 }
