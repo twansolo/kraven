@@ -234,7 +234,8 @@ program
       } else {
         // Generate sample repositories
         spinner.text = '🔍 Discovering repositories for training...';
-        repositories = await generateTrainingRepositories(githubService, options.sampleSize, options.popularRepos);
+        const sampleSize = parseInt(options.sampleSize) || 100;
+        repositories = await generateTrainingRepositories(githubService, sampleSize, options.popularRepos);
       }
       
       spinner.text = `📚 Collecting training data from ${repositories.length} repositories...`;
@@ -691,36 +692,75 @@ function printMarkdownForkAnalysis(forkComparison: any) {
 async function generateTrainingRepositories(githubService: any, sampleSize: number, includePopular: boolean): Promise<string[]> {
   const repositories: string[] = [];
   
-  // Sample from different categories and languages
+  // Sample from different languages (without categories to avoid search issues)
   const languages = ['javascript', 'typescript', 'python', 'java', 'go', 'rust'];
-  const categories = ['cli-tool', 'build-tool', 'dev-tool', 'testing', 'framework'];
+  const reposPerLanguage = Math.ceil(Number(sampleSize) / languages.length);
+  
+  console.log(`🔍 Searching for ${reposPerLanguage} repositories per language (${sampleSize} total)...`);
   
   for (const language of languages) {
-    for (const category of categories) {
-      try {
-        const searchResponse = await githubService.searchRepositories({
-          language,
-          category,
-          minStars: includePopular ? 50 : 10,
-          maxStars: includePopular ? undefined : 1000,
-          pushedBefore: '2023-01-01' // Focus on potentially abandoned projects
-        }, 1, Math.min(10, Math.ceil(sampleSize / (languages.length * categories.length))));
-        
-        searchResponse.items.forEach((repo: any) => {
-          if (repositories.length < sampleSize) {
-            repositories.push(repo.full_name);
-          }
-        });
-        
-        // Rate limiting
-        await new Promise(resolve => setTimeout(resolve, 200));
-        
-      } catch (error) {
-        console.warn(`Failed to sample ${language}/${category}:`, error);
-      }
+    try {
+      console.log(`  Searching ${language} repositories...`);
+      
+      const searchResponse = await githubService.searchRepositories({
+        language,
+        minStars: includePopular ? 50 : 10,
+        maxStars: includePopular ? undefined : 5000,
+        pushedBefore: '2023-01-01' // Focus on potentially abandoned projects
+      }, 1, Math.min(30, reposPerLanguage));
+      
+      console.log(`  Found ${searchResponse.items.length} ${language} repositories`);
+      
+      searchResponse.items.forEach((repo: any) => {
+        if (repositories.length < sampleSize && !repositories.includes(repo.full_name)) {
+          repositories.push(repo.full_name);
+        }
+      });
+      
+      // Rate limiting
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+    } catch (error) {
+      console.warn(`Failed to sample ${language} repositories:`, error instanceof Error ? error.message : error);
     }
   }
   
+  // If we still don't have enough, try some popular abandoned projects
+  if (repositories.length < sampleSize) {
+    console.log(`🎯 Adding known abandoned projects to reach sample size...`);
+    
+    const knownAbandoned = [
+      'bower/bower',
+      'angular/angular.js',
+      'jquery/jquery-ui',
+      'atom/atom',
+      'meteor/meteor',
+      'strongloop/express',
+      'jashkenas/backbone',
+      'documentcloud/backbone',
+      'moment/moment',
+      'chalk/chalk',
+      'yargs/yargs',
+      'gulpjs/gulp',
+      'gruntjs/grunt',
+      'browserify/browserify',
+      'requirejs/requirejs',
+      'component/component',
+      'yeoman/yeoman',
+      'necolas/normalize.css',
+      'daneden/animate.css',
+      'less/less.js',
+      'stylus/stylus'
+    ];
+    
+    knownAbandoned.forEach(repo => {
+      if (repositories.length < sampleSize && !repositories.includes(repo)) {
+        repositories.push(repo);
+      }
+    });
+  }
+  
+  console.log(`✅ Generated ${repositories.length} repositories for training`);
   return repositories.slice(0, sampleSize);
 }
 
