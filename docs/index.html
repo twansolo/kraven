@@ -7,119 +7,144 @@
     <meta name="description" content="Discover abandoned GitHub repositories ripe for revival. Find unmaintained projects with active communities waiting for new maintainers.">
     <link rel="stylesheet" href="css/style.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-<!-- Hero Section -->
-<section class="hero-section">
-    <div class="hero-content">
-        <h1 class="hero-title">Find Your Next Open Source Project</h1>
-        <p class="hero-subtitle">
-            Kraven helps you discover abandoned GitHub repositories with active communities, 
-            high-quality code, and real potential for revival.
-        </p>
-        <div class="hero-stats">
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <span class="stat-number">10K+</span>
-                    <span class="stat-label">Projects Analyzed</span>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-number">500+</span>
-                    <span class="stat-label">Successfully Revived</span>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-number">50+</span>
-                    <span class="stat-label">Languages Supported</span>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-number">100%</span>
-                    <span class="stat-label">Open Source</span>
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="hero-content">
+            <div class="hero-title">
+                <span class="spider">🕷️</span>
+                <span class="title-text">Kraven</span>
+            </div>
+            <p class="hero-subtitle">Hunt Abandoned GitHub Projects</p>
+            <p class="hero-description">
+                Discover unmaintained repositories with active communities, high-quality code, and real potential for revival. 
+                Find your next open source project or help breathe new life into forgotten gems.
+            </p>
+            <div class="hero-stats">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <span class="stat-number">10K+</span>
+                        <span class="stat-label">Projects Analyzed</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number">500+</span>
+                        <span class="stat-label">Successfully Revived</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number">50+</span>
+                        <span class="stat-label">Languages Supported</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-number">100%</span>
+                        <span class="stat-label">Open Source</span>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-</section>
+    </section>
 
-<!-- Features Section -->
-<section class="features-section">
-    <h2 style="text-align: center; font-size: 2.5rem; margin-bottom: 3rem; color: #333;">
-        <i class="fas fa-star" style="color: var(--kraven-primary);"></i>
-        Why Choose Kraven?
-    </h2>
-    
-    <div class="feature-grid">
-        <div class="feature-card">
-            <div class="feature-icon">
-                <i class="fas fa-search"></i>
+    <!-- Features Section -->
+    <section class="features-section">
+        <div class="container">
+            <h2 class="section-title">
+                <i class="fas fa-star"></i>
+                Why Choose Kraven?
+            </h2>
+            
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <h3 class="feature-title">Smart Discovery</h3>
+                    <p class="feature-description">
+                        Advanced algorithms analyze repository health, community engagement, 
+                        and revival potential to find the best candidates.
+                    </p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-code-branch"></i>
+                    </div>
+                    <h3 class="feature-title">Fork Analysis</h3>
+                    <p class="feature-description">
+                        Unique fork comparison engine that finds the most active and 
+                        well-maintained forks of abandoned projects.
+                    </p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3 class="feature-title">Security Analysis</h3>
+                    <p class="feature-description">
+                        Comprehensive dependency health checks and vulnerability scanning 
+                        to ensure code quality and security.
+                    </p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3 class="feature-title">Data-Driven Insights</h3>
+                    <p class="feature-description">
+                        Detailed metrics on abandonment likelihood, community activity, 
+                        technical complexity, and market relevance.
+                    </p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-desktop"></i>
+                    </div>
+                    <h3 class="feature-title">Dual Interface</h3>
+                    <p class="feature-description">
+                        Use the web interface for quick searches or the CLI tool for 
+                        advanced filtering and automation.
+                    </p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-rocket"></i>
+                    </div>
+                    <h3 class="feature-title">Fast & Efficient</h3>
+                    <p class="feature-description">
+                        Optimized GitHub API usage with intelligent rate limiting 
+                        for lightning-fast project discovery.
+                    </p>
+                </div>
             </div>
-            <h3 class="feature-title">Smart Discovery</h3>
-            <p class="feature-description">
-                Advanced algorithms analyze repository health, community engagement, 
-                and revival potential to find the best candidates.
-            </p>
         </div>
-        
-        <div class="feature-card">
-            <div class="feature-icon">
-                <i class="fas fa-chart-line"></i>
-            </div>
-            <h3 class="feature-title">Data-Driven Analysis</h3>
-            <p class="feature-description">
-                Get detailed metrics on abandonment likelihood, community activity, 
-                technical complexity, and market relevance.
-            </p>
-        </div>
-        
-        <div class="feature-card">
-            <div class="feature-icon">
-                <i class="fas fa-desktop"></i>
-            </div>
-            <h3 class="feature-title">Dual Interface</h3>
-            <p class="feature-description">
-                Use the web interface for quick searches or the CLI tool for 
-                advanced filtering and automation.
-            </p>
-        </div>
-        
-        <div class="feature-card">
-            <div class="feature-icon">
-                <i class="fas fa-users"></i>
-            </div>
-            <h3 class="feature-title">Community Focus</h3>
-            <p class="feature-description">
-                Find projects with active user bases waiting for new maintainers, 
-                ensuring your efforts have real impact.
-            </p>
-        </div>
-        
-        <div class="feature-card">
-            <div class="feature-icon">
-                <i class="fas fa-code"></i>
-            </div>
-            <h3 class="feature-title">Quality Code</h3>
-            <p class="feature-description">
-                Filter by technical complexity, code quality indicators, 
-                and documentation to find projects that match your skills.
-            </p>
-        </div>
-        
-        <div class="feature-card">
-            <div class="feature-icon">
-                <i class="fas fa-rocket"></i>
-            </div>
-            <h3 class="feature-title">Fast & Efficient</h3>
-            <p class="feature-description">
-                Optimized GitHub API usage with rate limiting and caching 
-                for lightning-fast project discovery.
-            </p>
-        </div>
-    </div>
-</section>
+    </section>
 
-        <!-- Search Form -->
-        <section class="search-section">
+    <!-- Navigation Tabs -->
+    <section class="nav-section">
+        <div class="nav-container">
+            <div class="nav-tabs">
+                <button class="nav-tab active" data-tab="hunt">
+                    <i class="fas fa-search"></i> Hunt Projects
+                </button>
+                <button class="nav-tab" data-tab="forks">
+                    <i class="fas fa-code-branch"></i> Analyze Forks
+                </button>
+                <button class="nav-tab" data-tab="analyze">
+                    <i class="fas fa-microscope"></i> Deep Analysis
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Hunt Tab - Search Form -->
+    <section id="hunt-tab" class="tab-content search-section active">
+        <div class="container">
             <div class="search-container">
-                <h2><i class="fas fa-search"></i> Hunt for Projects</h2>
+                <h2><i class="fas fa-search"></i> Hunt for Abandoned Projects</h2>
                 
                 <form id="searchForm" class="search-form">
                     <div class="form-grid">
@@ -189,16 +214,137 @@
                     </div>
                 </form>
             </div>
-        </section>
-
-        <!-- Loading -->
-        <div id="loading" class="loading hidden">
-            <div class="spinner"></div>
-            <p>🕷️ Kraven is hunting for abandoned projects...</p>
         </div>
+    </section>
 
-        <!-- Results -->
-        <section id="results" class="results-section hidden">
+    <!-- Fork Analysis Tab -->
+    <section id="forks-tab" class="tab-content search-section">
+        <div class="container">
+            <div class="search-container">
+                <h2><i class="fas fa-code-branch"></i> Analyze Repository Forks</h2>
+                
+                <form id="forkAnalysisForm" class="search-form">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="repository">Repository (owner/repo)</label>
+                            <input type="text" id="repository" name="repository" placeholder="e.g. bower/bower" required>
+                            <small>Enter the GitHub repository to analyze forks for</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="maxForks">Maximum Forks to Analyze</label>
+                            <input type="number" id="maxForks" name="maxForks" value="20" min="1" max="50">
+                            <small>Higher numbers take longer but provide more complete analysis</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="minForkStars">Minimum Stars</label>
+                            <input type="number" id="minForkStars" name="minForkStars" value="1" min="0">
+                            <small>Only analyze forks with at least this many stars</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="minActivity">Maximum Days Since Activity</label>
+                            <input type="number" id="minActivity" name="minActivity" value="365" min="1">
+                            <small>Only consider forks active within this timeframe</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="sortBy">Sort Forks By</label>
+                            <select id="sortBy" name="sortBy">
+                                <option value="activity">Activity Score</option>
+                                <option value="stars">Star Count</option>
+                                <option value="divergence">Divergence from Original</option>
+                                <option value="health">Dependency Health</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="forkGithubToken">GitHub Token (Optional)</label>
+                            <input type="password" id="forkGithubToken" name="forkGithubToken" placeholder="ghp_... (for higher rate limits)">
+                            <small>Fork analysis requires many API calls - token highly recommended</small>
+                        </div>
+                    </div>
+
+                    <div class="search-actions">
+                        <button type="submit" class="btn btn-primary" id="analyzeForkBtn">
+                            <i class="fas fa-code-branch"></i>
+                            Analyze Forks
+                        </button>
+                        <button type="button" class="btn btn-secondary" id="clearForkBtn">
+                            <i class="fas fa-eraser"></i>
+                            Clear
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Deep Analysis Tab -->
+    <section id="analyze-tab" class="tab-content search-section">
+        <div class="container">
+            <div class="search-container">
+                <h2><i class="fas fa-microscope"></i> Deep Repository Analysis</h2>
+                
+                <form id="deepAnalysisForm" class="search-form">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="analyzeRepository">Repository (owner/repo)</label>
+                            <input type="text" id="analyzeRepository" name="analyzeRepository" placeholder="e.g. microsoft/typescript" required>
+                            <small>Enter the GitHub repository for comprehensive analysis</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="analysisDepth">Analysis Depth</label>
+                            <select id="analysisDepth" name="analysisDepth">
+                                <option value="basic">Basic Analysis</option>
+                                <option value="detailed" selected>Detailed Analysis</option>
+                                <option value="comprehensive">Comprehensive Analysis</option>
+                            </select>
+                            <small>Comprehensive includes dependency and security analysis</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="includeForksAnalysis">Include Fork Analysis</label>
+                            <select id="includeForksAnalysis" name="includeForksAnalysis">
+                                <option value="false">No</option>
+                                <option value="true">Yes</option>
+                            </select>
+                            <small>Also analyze the top forks of this repository</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="deepGithubToken">GitHub Token (Optional)</label>
+                            <input type="password" id="deepGithubToken" name="deepGithubToken" placeholder="ghp_... (for higher rate limits)">
+                            <small>Deep analysis requires many API calls</small>
+                        </div>
+                    </div>
+
+                    <div class="search-actions">
+                        <button type="submit" class="btn btn-primary" id="deepAnalyzeBtn">
+                            <i class="fas fa-microscope"></i>
+                            Deep Analyze
+                        </button>
+                        <button type="button" class="btn btn-secondary" id="clearDeepBtn">
+                            <i class="fas fa-eraser"></i>
+                            Clear
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Loading -->
+    <div id="loading" class="loading hidden">
+        <div class="spinner"></div>
+        <p>🕷️ Kraven is hunting for abandoned projects...</p>
+    </div>
+
+    <!-- Hunt Results -->
+    <section id="results" class="results-section hidden">
+        <div class="container">
             <div class="results-header">
                 <h2><i class="fas fa-trophy"></i> Hunt Results</h2>
                 <div class="results-stats">
@@ -217,42 +363,128 @@
             <div id="resultsContainer" class="results-container">
                 <!-- Results will be populated here -->
             </div>
-        </section>
-
-        <!-- Rate Limit Info -->
-        <div id="rateLimitInfo" class="rate-limit-info">
-            <i class="fas fa-tachometer-alt"></i>
-            <span id="rateLimitText">Rate limit: Unknown</span>
         </div>
+    </section>
 
-        <!-- Footer -->
-        <footer class="footer">
+    <!-- Fork Analysis Results -->
+    <section id="forkResults" class="results-section hidden">
+        <div class="container">
+            <div class="results-header">
+                <h2><i class="fas fa-code-branch"></i> Fork Analysis Results</h2>
+                <div class="results-stats">
+                    <span id="forkResultsCount">0 forks analyzed</span>
+                    <div class="results-actions">
+                        <button class="btn btn-small" id="exportForkJson">
+                            <i class="fas fa-download"></i> Export JSON
+                        </button>
+                        <button class="btn btn-small" id="sortForkResults">
+                            <i class="fas fa-sort"></i> Sort by Activity
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fork Overview -->
+            <div id="forkOverview" class="fork-overview">
+                <!-- Overview stats will be populated here -->
+            </div>
+
+            <!-- Fork Insights -->
+            <div id="forkInsights" class="fork-insights hidden">
+                <!-- Insights will be populated here -->
+            </div>
+
+            <!-- Fork Recommendations -->
+            <div id="forkRecommendations" class="fork-recommendations hidden">
+                <!-- Special recommendations will be populated here -->
+            </div>
+            
+            <div id="forkResultsContainer" class="results-container">
+                <!-- Fork results will be populated here -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Deep Analysis Results -->
+    <section id="deepResults" class="results-section hidden">
+        <div class="container">
+            <div class="results-header">
+                <h2><i class="fas fa-microscope"></i> Deep Analysis Results</h2>
+                <div class="results-stats">
+                    <span id="deepResultsCount">Analysis complete</span>
+                    <div class="results-actions">
+                        <button class="btn btn-small" id="exportDeepJson">
+                            <i class="fas fa-download"></i> Export JSON
+                        </button>
+                        <button class="btn btn-small" id="generateReport">
+                            <i class="fas fa-file-alt"></i> Generate Report
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="deepResultsContainer" class="results-container">
+                <!-- Deep analysis results will be populated here -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Rate Limit Info -->
+    <div id="rateLimitInfo" class="rate-limit-info">
+        <i class="fas fa-tachometer-alt"></i>
+        <span id="rateLimitText">Rate limit: Unknown</span>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
             <div class="footer-content">
                 <div class="footer-section">
                     <h3>🕷️ Kraven</h3>
                     <p>Hunt abandoned GitHub projects and give them new life.</p>
+                    <p>Built with ❤️ for the open source community.</p>
                 </div>
                 <div class="footer-section">
                     <h4>Resources</h4>
                     <ul>
-                        <li><a href="https://github.com/twansolo/kraven">GitHub Repository</a></li>
-                        <li><a href="https://github.com/settings/tokens">Create GitHub Token</a></li>
-                        <li><a href="#examples">Usage Examples</a></li>
+                        <li><a href="https://github.com/twansolo/kraven" target="_blank">GitHub Repository</a></li>
+                        <li><a href="https://github.com/settings/tokens" target="_blank">Create GitHub Token</a></li>
+                        <li><a href="https://www.npmjs.com/package/kraven" target="_blank">npm Package</a></li>
                     </ul>
                 </div>
                 <div class="footer-section">
                     <h4>CLI Tool</h4>
                     <p>Also available as a command-line tool:</p>
-                    <code>npm install -g kraven</code>
+                    <div class="code-block">
+                        <code>npm install -g kraven</code>
+                    </div>
+                    <div class="code-block">
+                        <code>kraven hunt --language typescript</code>
+                    </div>
+                </div>
+                <div class="footer-section">
+                    <h4>Features</h4>
+                    <ul>
+                        <li>🔍 Smart project discovery</li>
+                        <li>🍴 Fork analysis & comparison</li>
+                        <li>🛡️ Security vulnerability scanning</li>
+                        <li>📊 Data-driven insights</li>
+                        <li>⚡ Lightning fast analysis</li>
+                    </ul>
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2025 Kraven Project Hunter. Built with ❤️ for open source.</p>
+                <p>&copy; 2025 Kraven Project Hunter. Open source MIT license.</p>
+                <p>
+                    <i class="fas fa-spider"></i>
+                    <em>"With great power comes great responsibility... to revive abandoned code."</em>
+                </p>
             </div>
-        </footer>
-    </div>
+        </div>
+    </footer>
 
     <script src="js/github-api.js"></script>
+    <script src="js/fork-analyzer.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>
