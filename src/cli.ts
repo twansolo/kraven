@@ -258,6 +258,50 @@ program
     }
   });
 
+// Languages command
+program
+  .command('languages')
+  .description('Show supported programming languages for analysis')
+  .action(async () => {
+    try {
+      const kraven = new KravenHunter();
+      const githubService = kraven.githubService;
+      const { DependencyAnalyzer } = await import('./services/dependency-analyzer');
+      const dependencyAnalyzer = new DependencyAnalyzer(githubService);
+      
+      const supportedLanguages = dependencyAnalyzer.getSupportedLanguages();
+      
+      console.log(chalk.blue('🌍 Supported Programming Languages:\n'));
+      
+      const languageInfo = {
+        'javascript': { icon: '🟨', files: ['package.json'], registry: 'npm' },
+        'typescript': { icon: '🔷', files: ['package.json'], registry: 'npm' },
+        'python': { icon: '🐍', files: ['requirements.txt', 'setup.py', 'pyproject.toml', 'Pipfile'], registry: 'PyPI' },
+        'rust': { icon: '🦀', files: ['Cargo.toml', 'Cargo.lock'], registry: 'crates.io' },
+        'go': { icon: '🐹', files: ['go.mod', 'go.sum'], registry: 'pkg.go.dev' },
+        'java': { icon: '☕', files: ['pom.xml', 'build.gradle'], registry: 'Maven Central' }
+      };
+      
+      supportedLanguages.forEach(language => {
+        const info = languageInfo[language as keyof typeof languageInfo];
+        if (info) {
+          console.log(`${info.icon} ${chalk.bold(language.charAt(0).toUpperCase() + language.slice(1))}`);
+          console.log(`   Files: ${info.files.join(', ')}`);
+          console.log(`   Registry: ${info.registry}`);
+          console.log('');
+        }
+      });
+      
+      console.log(chalk.yellow('💡 Usage:'));
+      console.log('  kraven hunt --language python --ml-enhanced');
+      console.log('  kraven analyze owner/rust-repo --ml-enhanced');
+      
+    } catch (error) {
+      console.error(chalk.red('❌ Failed to show language info:'), error instanceof Error ? error.message : error);
+      process.exit(1);
+    }
+  });
+
 // ML Info command
 program
   .command('ml-info')

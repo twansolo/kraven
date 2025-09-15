@@ -1,18 +1,25 @@
 import { GitHubRepository, RepositoryAnalysis, DependencyAnalysis } from '../types';
 import { GitHubService } from './github';
 import { DependencyAnalyzer } from './dependency-analyzer';
+import { MLPredictor, EnhancedRepositoryAnalysis, PredictionConfig } from './ml-predictor';
 
 export class RepositoryAnalyzer {
   private dependencyAnalyzer: DependencyAnalyzer;
+  private mlPredictor: MLPredictor;
 
   constructor(private githubService: GitHubService) {
     this.dependencyAnalyzer = new DependencyAnalyzer(githubService);
+    this.mlPredictor = new MLPredictor();
   }
 
   /**
-   * Analyze a repository for abandonment and revival potential
+   * Analyze a repository for abandonment and revival potential with ML enhancement
    */
-  async analyzeRepository(repo: GitHubRepository): Promise<RepositoryAnalysis> {
+  async analyzeRepository(
+    repo: GitHubRepository, 
+    useML = true,
+    mlConfig?: PredictionConfig
+  ): Promise<EnhancedRepositoryAnalysis> {
     const [owner, name] = repo.full_name.split('/');
     
     // Get additional data for analysis
@@ -24,7 +31,7 @@ export class RepositoryAnalyzer {
     const issuesData = issues.status === 'fulfilled' ? issues.value : [];
     const commitsData = commits.status === 'fulfilled' ? commits.value : [];
 
-    // Calculate metrics
+    // Calculate basic metrics
     const lastCommitAge = this.calculateLastCommitAge(repo.pushed_at);
     const abandonmentScore = this.calculateAbandonmentScore(repo, issuesData, commitsData);
     
@@ -42,7 +49,8 @@ export class RepositoryAnalyzer {
     const reasons = this.generateAbandonmentReasons(repo, lastCommitAge, issuesData);
     const recommendations = this.generateRecommendations(repo, abandonmentScore, revivalPotential);
 
-    return {
+    // Create base analysis
+    const baseAnalysis: RepositoryAnalysis = {
       repository: repo,
       abandonmentScore,
       revivalPotential,
@@ -55,6 +63,17 @@ export class RepositoryAnalyzer {
       marketRelevance,
       reasons,
       recommendations
+    };
+
+    // Enhance with ML if available and requested
+    if (useML && this.mlPredictor.isMLAvailable()) {
+      return await this.mlPredictor.enhanceAnalysis(repo, baseAnalysis, mlConfig);
+    }
+
+    // Return standard analysis with rule-based scoring
+    return {
+      ...baseAnalysis,
+      scoringMethod: 'rule-based'
     };
   }
 
@@ -236,7 +255,6 @@ export class RepositoryAnalyzer {
 
     return Math.max(0, Math.min(score, 100));
   }
-
 
   /**
    * Generate reasons for abandonment classification

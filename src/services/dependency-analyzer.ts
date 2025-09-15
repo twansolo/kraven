@@ -1,4 +1,5 @@
 import { GitHubService } from './github';
+import { MultiLanguageAnalyzer, MultiLanguageAnalysis } from './multi-language-analyzer';
 import axios from 'axios';
 
 export interface DependencyInfo {
@@ -41,13 +42,31 @@ export interface PackageFile {
 export class DependencyAnalyzer {
   private npmRegistryUrl = 'https://registry.npmjs.org';
   private githubAdvisoryUrl = 'https://api.github.com/advisories';
+  private multiLanguageAnalyzer: MultiLanguageAnalyzer;
 
-  constructor(private githubService: GitHubService) {}
+  constructor(private githubService: GitHubService) {
+    this.multiLanguageAnalyzer = new MultiLanguageAnalyzer(githubService);
+  }
 
   /**
-   * Analyze dependencies for a repository
+   * Analyze dependencies for a repository (supports multiple languages)
    */
-  async analyzeDependencies(owner: string, repo: string): Promise<DependencyAnalysis> {
+  async analyzeDependencies(owner: string, repo: string, useMultiLanguage = true): Promise<DependencyAnalysis> {
+    // Try multi-language analysis first
+    if (useMultiLanguage) {
+      try {
+        const multiLangAnalysis = await this.multiLanguageAnalyzer.analyzeRepository(owner, repo);
+        
+        // If we found multiple languages, return combined analysis
+        if (Object.keys(multiLangAnalysis.analyses).length > 0) {
+          return this.convertMultiLanguageAnalysis(multiLangAnalysis);
+        }
+      } catch (error) {
+        console.warn(`Multi-language analysis failed for ${owner}/${repo}, falling back to JavaScript:`, error);
+      }
+    }
+    
+    // Fall back to original JavaScript/npm analysis
     try {
       // Get package files from the repository
       const packageFiles = await this.getPackageFiles(owner, repo);
@@ -460,6 +479,60 @@ export class DependencyAnalyzer {
       chunks.push(array.slice(i, i + chunkSize));
     }
     return chunks;
+  }
+
+  /**
+   * Convert multi-language analysis to standard DependencyAnalysis
+   */
+  private convertMultiLanguageAnalysis(multiLangAnalysis: MultiLanguageAnalysis): DependencyAnalysis {
+    // Combine all dependencies from all languages
+    const allDependencies: DependencyInfo[] = [];
+    let totalDeps = 0;
+    let outdatedDeps = 0;
+    let vulnerableDeps = 0;
+    let criticalVulns = 0;
+    
+    Object.values(multiLangAnalysis.analyses).forEach(analysis => {
+      allDependencies.push(...analysis.dependencies);
+      totalDeps += analysis.totalDependencies;
+      outdatedDeps += analysis.outdatedDependencies;
+      vulnerableDeps += analysis.vulnerableDependencies;
+      criticalVulns += analysis.criticalVulnerabilities;
+    });
+    
+    // Enhanced recommendations combining all languages
+    const enhancedRecommendations = [
+      ...multiLangAnalysis.recommendations,
+      ...multiLangAnalysis.crossLanguageInsights,
+      `🌍 Multi-language project: ${multiLangAnalysis.detectedLanguages.join(', ')}`,
+      `📊 Primary language: ${multiLangAnalysis.primaryLanguage}`
+    ];
+    
+    return {
+      totalDependencies: totalDeps,
+      outdatedDependencies: outdatedDeps,
+      vulnerableDependencies: vulnerableDeps,
+      criticalVulnerabilities: criticalVulns,
+      dependencyHealth: multiLangAnalysis.overallHealth,
+      healthScore: multiLangAnalysis.overallScore,
+      dependencies: allDependencies,
+      recommendations: enhancedRecommendations,
+      lastUpdated: new Date()
+    };
+  }
+
+  /**
+   * Get supported languages for multi-language analysis
+   */
+  getSupportedLanguages(): string[] {
+    return this.multiLanguageAnalyzer.getSupportedLanguages();
+  }
+
+  /**
+   * Check if a language is supported
+   */
+  isLanguageSupported(language: string): boolean {
+    return this.multiLanguageAnalyzer.isLanguageSupported(language);
   }
 
   private delay(ms: number): Promise<void> {

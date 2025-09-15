@@ -338,8 +338,8 @@ export class MLTrainer {
    * Train ML models on collected data
    */
   async trainModels(): Promise<void> {
-    if (this.trainingData.length < 10) {
-      throw new Error('Need at least 10 training samples to train models');
+    if (this.trainingData.length < 50) {
+      throw new Error('Need at least 50 training samples to train models');
     }
     
     console.log(`🧠 Training ML models on ${this.trainingData.length} samples...`);
