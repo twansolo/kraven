@@ -263,6 +263,9 @@
                 <button class="nav-tab" data-tab="analyze">
                     <i class="fas fa-microscope"></i> Deep Analysis
                 </button>
+                <button class="nav-tab" data-tab="organization">
+                    <i class="fas fa-building"></i> Scan Organizations
+                </button>
             </div>
         </div>
     </section>
@@ -463,6 +466,103 @@
         </div>
     </section>
 
+    <!-- Organization Scanning Tab -->
+    <section id="organization-tab" class="tab-content search-section">
+        <div class="container">
+            <div class="search-container">
+                <h2><i class="fas fa-building"></i> Scan Organizations & Users</h2>
+                
+                <form id="organizationScanForm" class="search-form">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="organizationName">Organization or User</label>
+                            <input type="text" id="organizationName" name="organizationName" placeholder="e.g. microsoft, facebook, torvalds" required>
+                            <small>Enter GitHub organization or username to scan all their repositories</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="maxRepos">Maximum Repositories</label>
+                            <input type="number" id="maxRepos" name="maxRepos" value="50" min="1" max="200">
+                            <small>Number of repositories to analyze (higher numbers take longer)</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="orgMinStars">Minimum Stars</label>
+                            <input type="number" id="orgMinStars" name="orgMinStars" placeholder="e.g. 100" min="0">
+                            <small>Only analyze repositories with at least this many stars</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="orgMaxStars">Maximum Stars</label>
+                            <input type="number" id="orgMaxStars" name="orgMaxStars" placeholder="e.g. 10000" min="0">
+                            <small>Only analyze repositories with at most this many stars</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="orgLanguages">Languages (Optional)</label>
+                            <input type="text" id="orgLanguages" name="orgLanguages" placeholder="e.g. javascript,typescript,python">
+                            <small>Comma-separated list of programming languages to include</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="orgPushedBefore">Last Updated Before</label>
+                            <input type="date" id="orgPushedBefore" name="orgPushedBefore">
+                            <small>Only analyze repositories last updated before this date</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="excludeForksOrg">Exclude Forks</label>
+                            <select id="excludeForksOrg" name="excludeForksOrg">
+                                <option value="true">Yes - Exclude forked repositories</option>
+                                <option value="false">No - Include all repositories</option>
+                            </select>
+                            <small>Whether to exclude repositories that are forks of other projects</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="excludeArchivedOrg">Exclude Archived</label>
+                            <select id="excludeArchivedOrg" name="excludeArchivedOrg">
+                                <option value="true">Yes - Exclude archived repositories</option>
+                                <option value="false">No - Include archived repositories</option>
+                            </select>
+                            <small>Whether to exclude repositories that have been archived</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="orgGithubToken">GitHub Token (Optional)</label>
+                            <input type="password" id="orgGithubToken" name="orgGithubToken" placeholder="ghp_... (for higher rate limits)">
+                            <small>Organization scanning requires many API calls - token highly recommended</small>
+                        </div>
+                    </div>
+
+                    <div class="search-actions">
+                        <button type="submit" class="btn btn-primary" id="scanOrganizationBtn">
+                            <i class="fas fa-building"></i>
+                            Scan Organization
+                        </button>
+                        <button type="button" class="btn btn-secondary" id="clearOrgBtn">
+                            <i class="fas fa-eraser"></i>
+                            Clear
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Organization Scan Tips -->
+                <div class="search-tips">
+                    <h3><i class="fas fa-lightbulb"></i> Organization Scanning Tips</h3>
+                    <ul>
+                        <li><strong>Popular Organizations:</strong> microsoft, google, facebook, netflix, airbnb, uber</li>
+                        <li><strong>Individual Users:</strong> torvalds, gaearon, sindresorhus, tj, substack</li>
+                        <li><strong>Rate Limits:</strong> Use a GitHub token for better rate limits (5000 vs 60 requests/hour)</li>
+                        <li><strong>Large Organizations:</strong> Start with higher minimum stars (e.g. 100+) to focus on popular projects</li>
+                        <li><strong>Time Range:</strong> Use "Last Updated Before" to find potentially abandoned projects</li>
+                        <li><strong>Language Focus:</strong> Specify languages to narrow down to your expertise area</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Loading -->
     <div id="loading" class="loading hidden">
         <div class="spinner"></div>
@@ -552,6 +652,45 @@
             
             <div id="deepResultsContainer" class="results-container">
                 <!-- Deep analysis results will be populated here -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Organization Scan Results -->
+    <section id="organizationResults" class="results-section hidden">
+        <div class="container">
+            <div class="results-header">
+                <h2><i class="fas fa-building"></i> Organization Scan Results</h2>
+                <div class="results-stats">
+                    <span id="orgResultsCount">Scan complete</span>
+                    <div class="results-actions">
+                        <button class="btn btn-small" id="exportOrgJson">
+                            <i class="fas fa-download"></i> Export JSON
+                        </button>
+                        <button class="btn btn-small" id="exportOrgMarkdown">
+                            <i class="fas fa-file-alt"></i> Export Report
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Organization Overview -->
+            <div id="orgOverview" class="org-overview hidden">
+                <!-- Organization stats will be populated here -->
+            </div>
+
+            <!-- Organization Insights -->
+            <div id="orgInsights" class="org-insights hidden">
+                <!-- Insights will be populated here -->
+            </div>
+
+            <!-- Organization Recommendations -->
+            <div id="orgRecommendations" class="org-recommendations hidden">
+                <!-- Recommendations will be populated here -->
+            </div>
+            
+            <div id="orgResultsContainer" class="results-container">
+                <!-- Organization scan results will be populated here -->
             </div>
         </div>
     </section>

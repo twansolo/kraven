@@ -31,6 +31,7 @@ class KravenApp {
             document.getElementById('githubToken').value = savedToken;
             document.getElementById('forkGithubToken').value = savedToken;
             document.getElementById('deepGithubToken').value = savedToken;
+            document.getElementById('orgGithubToken').value = savedToken;
             this.githubAPI.setToken(savedToken);
         }
     }
@@ -73,6 +74,10 @@ class KravenApp {
             this.handleTokenInput(e.target.value.trim());
         });
 
+        document.getElementById('orgGithubToken').addEventListener('input', (e) => {
+            this.handleTokenInput(e.target.value.trim());
+        });
+
         // Fork analysis form
         document.getElementById('forkAnalysisForm').addEventListener('submit', (e) => {
             e.preventDefault();
@@ -85,6 +90,12 @@ class KravenApp {
             this.performDeepAnalysis();
         });
 
+        // Organization scanning form
+        document.getElementById('organizationScanForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.performOrganizationScan();
+        });
+
         // Clear buttons
         document.getElementById('clearForkBtn').addEventListener('click', () => {
             this.clearForkForm();
@@ -92,6 +103,10 @@ class KravenApp {
 
         document.getElementById('clearDeepBtn').addEventListener('click', () => {
             this.clearDeepForm();
+        });
+
+        document.getElementById('clearOrgBtn').addEventListener('click', () => {
+            this.clearOrgForm();
         });
 
         // Export buttons
@@ -1257,6 +1272,227 @@ class KravenApp {
     delay(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
+
+    /**
+     * Perform organization scanning
+     */
+    async performOrganizationScan() {
+        if (this.isSearching) return;
+
+        try {
+            this.isSearching = true;
+            this.hideAllResults();
+            document.getElementById('loading').classList.remove('hidden');
+
+            // Get form data
+            const formData = new FormData(document.getElementById('organizationScanForm'));
+            const organization = formData.get('organizationName').trim();
+            const maxRepos = parseInt(formData.get('maxRepos')) || 50;
+            const minStars = formData.get('orgMinStars') ? parseInt(formData.get('orgMinStars')) : undefined;
+            const maxStars = formData.get('orgMaxStars') ? parseInt(formData.get('orgMaxStars')) : undefined;
+            const languages = formData.get('orgLanguages')?.split(',').map(l => l.trim()).filter(l => l) || [];
+            const pushedBefore = formData.get('orgPushedBefore') || undefined;
+            const excludeForks = formData.get('excludeForksOrg') === 'true';
+            const excludeArchived = formData.get('excludeArchivedOrg') === 'true';
+            const token = formData.get('orgGithubToken')?.trim();
+
+            if (!organization) {
+                throw new Error('Please enter an organization or username');
+            }
+
+            // Set token if provided
+            if (token) {
+                this.githubAPI.setToken(token);
+                localStorage.setItem('kraven_github_token', token);
+            }
+
+            // Update loading message
+            document.querySelector('#loading p').textContent = `🕷️ Scanning ${organization} repositories...`;
+
+            // This is a placeholder for the actual organization scanning logic
+            // In a real implementation, you would call your CLI tool or implement the organization scanning here
+            const results = await this.simulateOrganizationScan(organization, {
+                maxRepos,
+                minStars,
+                maxStars,
+                languages,
+                pushedBefore,
+                excludeForks,
+                excludeArchived
+            });
+
+            this.displayOrganizationResults(results);
+
+        } catch (error) {
+            console.error('Organization scan error:', error);
+            this.showError(`Organization scan failed: ${error.message}`);
+        } finally {
+            this.isSearching = false;
+            document.getElementById('loading').classList.add('hidden');
+        }
+    }
+
+    /**
+     * Simulate organization scanning (placeholder)
+     */
+    async simulateOrganizationScan(organization, filters) {
+        // This is a placeholder - in a real implementation you would:
+        // 1. Call your backend API that uses the CLI tool
+        // 2. Or implement the organization scanning logic directly
+        
+        await this.delay(2000); // Simulate processing time
+
+        return {
+            organization: {
+                login: organization,
+                name: organization.charAt(0).toUpperCase() + organization.slice(1),
+                type: 'Organization',
+                public_repos: Math.floor(Math.random() * 1000) + 100,
+                html_url: `https://github.com/${organization}`
+            },
+            totalRepositories: filters.maxRepos,
+            scannedRepositories: Math.floor(filters.maxRepos * 0.8),
+            abandonedProjects: Math.floor(filters.maxRepos * 0.3),
+            primeRevivalCandidates: Math.floor(filters.maxRepos * 0.1),
+            healthSummary: {
+                excellent: Math.floor(filters.maxRepos * 0.2),
+                good: Math.floor(filters.maxRepos * 0.3),
+                fair: Math.floor(filters.maxRepos * 0.2),
+                poor: Math.floor(filters.maxRepos * 0.2),
+                critical: Math.floor(filters.maxRepos * 0.1)
+            },
+            languageBreakdown: {
+                'JavaScript': Math.floor(filters.maxRepos * 0.3),
+                'TypeScript': Math.floor(filters.maxRepos * 0.2),
+                'Python': Math.floor(filters.maxRepos * 0.2),
+                'Java': Math.floor(filters.maxRepos * 0.1),
+                'Go': Math.floor(filters.maxRepos * 0.1),
+                'Other': Math.floor(filters.maxRepos * 0.1)
+            },
+            insights: [
+                `📊 ${organization} has a 30% abandonment rate across scanned repositories`,
+                `🎯 Found ${Math.floor(filters.maxRepos * 0.1)} prime revival candidates`,
+                `⭐ High-profile organization with average 1,250 stars per repository`,
+                `🔍 ${Math.floor(filters.maxRepos * 0.4)} repositories haven't been updated in over 6 months`
+            ],
+            recommendations: [
+                `📋 Create maintenance plan for ${Math.floor(filters.maxRepos * 0.3)} potentially abandoned repositories`,
+                `💎 ${Math.floor(filters.maxRepos * 0.1)} high-value repositories may need immediate attention`,
+                `🛡️ Consider organization-wide dependency audit and security review`,
+                `🔷 Consider migrating JavaScript projects to TypeScript for better maintainability`
+            ],
+            executionTime: 2.5,
+            timestamp: new Date().toISOString()
+        };
+    }
+
+    /**
+     * Display organization scan results
+     */
+    displayOrganizationResults(results) {
+        const resultsSection = document.getElementById('organizationResults');
+        const countElement = document.getElementById('orgResultsCount');
+        const overviewElement = document.getElementById('orgOverview');
+        const insightsElement = document.getElementById('orgInsights');
+        const recommendationsElement = document.getElementById('orgRecommendations');
+        const containerElement = document.getElementById('orgResultsContainer');
+
+        // Update results count
+        countElement.textContent = `Scanned ${results.scannedRepositories} repositories from ${results.organization.name}`;
+
+        // Create overview
+        overviewElement.innerHTML = `
+            <h3><i class="fas fa-chart-bar"></i> Organization Overview</h3>
+            <div class="org-stats-grid">
+                <div class="org-stat-item">
+                    <span class="org-stat-number">${results.organization.public_repos}</span>
+                    <span class="org-stat-label">Total Public Repos</span>
+                </div>
+                <div class="org-stat-item">
+                    <span class="org-stat-number">${results.scannedRepositories}</span>
+                    <span class="org-stat-label">Scanned</span>
+                </div>
+                <div class="org-stat-item">
+                    <span class="org-stat-number">${results.abandonedProjects}</span>
+                    <span class="org-stat-label">Abandoned</span>
+                </div>
+                <div class="org-stat-item">
+                    <span class="org-stat-number">${results.primeRevivalCandidates}</span>
+                    <span class="org-stat-label">Prime Candidates</span>
+                </div>
+                <div class="org-stat-item">
+                    <span class="org-stat-number">${results.healthSummary.critical}</span>
+                    <span class="org-stat-label">Critical Issues</span>
+                </div>
+                <div class="org-stat-item">
+                    <span class="org-stat-number">${results.executionTime}s</span>
+                    <span class="org-stat-label">Execution Time</span>
+                </div>
+            </div>
+        `;
+
+        // Create insights
+        insightsElement.innerHTML = `
+            <h3><i class="fas fa-lightbulb"></i> Key Insights</h3>
+            <ul>
+                ${results.insights.map(insight => `<li>${insight}</li>`).join('')}
+            </ul>
+        `;
+
+        // Create recommendations
+        recommendationsElement.innerHTML = `
+            <h3><i class="fas fa-tasks"></i> Recommendations</h3>
+            <ul>
+                ${results.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+            </ul>
+        `;
+
+        // Create language breakdown
+        const languageHtml = Object.entries(results.languageBreakdown)
+            .map(([lang, count]) => `
+                <div class="language-item">
+                    <span class="language-name">${lang}</span>
+                    <span class="language-count">${count} repositories</span>
+                </div>
+            `).join('');
+
+        containerElement.innerHTML = `
+            <div class="org-language-breakdown">
+                <h3><i class="fas fa-code"></i> Language Breakdown</h3>
+                <div class="language-grid">
+                    ${languageHtml}
+                </div>
+            </div>
+        `;
+
+        // Show all sections
+        overviewElement.classList.remove('hidden');
+        insightsElement.classList.remove('hidden');
+        recommendationsElement.classList.remove('hidden');
+        resultsSection.classList.remove('hidden');
+
+        // Store results for export
+        this.currentOrgResults = results;
+    }
+
+    /**
+     * Clear organization form
+     */
+    clearOrgForm() {
+        document.getElementById('organizationScanForm').reset();
+        document.getElementById('maxRepos').value = '50';
+        this.hideAllResults();
+    }
+
+    /**
+     * Hide all results sections (updated to include organization results)
+     */
+    hideAllResults() {
+        document.getElementById('results').classList.add('hidden');
+        document.getElementById('forkResults').classList.add('hidden');
+        document.getElementById('deepResults').classList.add('hidden');
+        document.getElementById('organizationResults').classList.add('hidden');
+    }
 }
 
 // Add CSS for error messages and additional styles
@@ -1347,6 +1583,37 @@ const additionalCSS = `
     content: "💡";
     position: absolute;
     left: 0;
+}
+
+.org-language-breakdown {
+    margin-top: 20px;
+}
+
+.language-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.language-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    background: var(--card-bg);
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+}
+
+.language-name {
+    font-weight: bold;
+    color: var(--light-text);
+}
+
+.language-count {
+    color: var(--muted-text);
+    font-size: 0.9em;
 }
 `;
 

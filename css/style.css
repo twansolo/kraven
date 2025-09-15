@@ -46,6 +46,83 @@ body {
     top: 6px;
 }
 
+/* Organization scanning specific styles */
+.search-tips {
+    margin-top: 30px;
+    padding: 20px;
+    background: var(--card-bg);
+    border-radius: 8px;
+    border-left: 4px solid var(--primary-color);
+}
+
+.search-tips h3 {
+    color: var(--primary-color);
+    margin-bottom: 15px;
+    font-size: 1.1em;
+}
+
+.search-tips ul {
+    list-style: none;
+    padding: 0;
+}
+
+.search-tips li {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.search-tips li:last-child {
+    border-bottom: none;
+}
+
+.search-tips strong {
+    color: var(--light-text);
+}
+
+/* Organization results specific styles */
+.org-overview, .org-insights, .org-recommendations {
+    margin-bottom: 25px;
+    padding: 20px;
+    background: var(--card-bg);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.org-overview h3, .org-insights h3, .org-recommendations h3 {
+    color: var(--primary-color);
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.org-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.org-stat-item {
+    text-align: center;
+    padding: 15px;
+    background: var(--darker-bg);
+    border-radius: 6px;
+}
+
+.org-stat-number {
+    display: block;
+    font-size: 1.5em;
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.org-stat-label {
+    font-size: 0.9em;
+    color: var(--muted-text);
+    margin-top: 5px;
+}
+
 .container {
     max-width: 1200px;
     margin: 0 auto;
