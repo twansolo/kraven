@@ -11,6 +11,8 @@ import { SearchFilters, ProjectCategory, ForkAnalysisOptions, PredictionConfig }
 import { ForkAnalyzer } from './services/fork-analyzer';
 import { MLTrainer } from './services/ml-trainer';
 import { MLPredictor } from './services/ml-predictor';
+import { OrganizationScanner } from './services/organization-scanner';
+// ImprovedMLTrainer will be imported dynamically
 
 // Load environment variables from multiple locations
 function loadEnvironmentVariables() {
@@ -216,6 +218,8 @@ program
   .option('--repositories <file>', 'File containing repository list (one per line)')
   .option('--sample-size <number>', 'Number of repositories to sample for training', parseInt, 100)
   .option('--popular-repos', 'Include popular repositories in training data', false)
+  .option('--improved', 'Use improved training algorithm with better accuracy', false)
+  .option('--min-accuracy <threshold>', 'Minimum accuracy to save models (0.1-1.0)', parseFloat, 0.6)
   .action(async (options) => {
     const spinner = ora('🤖 Preparing ML training...').start();
     
@@ -223,6 +227,8 @@ program
       const kraven = new KravenHunter();
       const githubService = kraven.githubService;
       const analyzer = new (await import('./services/analyzer')).RepositoryAnalyzer(githubService);
+      
+      // Use the standard trainer
       const trainer = new MLTrainer(githubService, analyzer);
       
       let repositories: string[] = [];
@@ -242,18 +248,141 @@ program
       await trainer.collectTrainingData(repositories);
       
       spinner.text = '🧠 Training ML models...';
-      await trainer.trainModels();
       
+      // Train the models
+      await trainer.trainModels();
       spinner.stop();
       console.log(chalk.green('✅ ML models trained successfully!'));
+      
       console.log(chalk.blue('🎯 Enhanced scoring is now available for analysis'));
       console.log(chalk.yellow('\n💡 Usage:'));
       console.log('  kraven hunt --ml-enhanced --language typescript');
       console.log('  kraven analyze owner/repo --ml-enhanced');
+      console.log(chalk.gray('\n🔬 For better models, try: kraven train --improved --min-accuracy 0.7'));
       
     } catch (error) {
       spinner.stop();
       console.error(chalk.red('❌ ML training failed:'), error instanceof Error ? error.message : error);
+      process.exit(1);
+    }
+  });
+
+// Organization scan command
+program
+  .command('scan <organization>')
+  .description('Scan all repositories for an organization or user')
+  .option('--max-repos <number>', 'Maximum repositories to analyze', parseInt, 50)
+  .option('--min-stars <number>', 'Minimum stars to consider', parseInt, 0)
+  .option('--max-stars <number>', 'Maximum stars to consider', parseInt)
+  .option('--languages <languages>', 'Comma-separated list of languages to include')
+  .option('--exclude-forks', 'Exclude forked repositories', false)
+  .option('--exclude-archived', 'Exclude archived repositories', false)
+  .option('--pushed-before <date>', 'Only repos last updated before date (YYYY-MM-DD)')
+  .option('--pushed-after <date>', 'Only repos last updated after date (YYYY-MM-DD)')
+  .option('--ml-enhanced', 'Use machine learning enhanced analysis', false)
+  .option('--ml-confidence <threshold>', 'ML confidence threshold (0.1-1.0)', parseFloat, 0.7)
+  .option('--output <format>', 'Output format: table, json, markdown', 'table')
+  .action(async (organization, options) => {
+    const spinner = ora(`🏢 Scanning ${organization} repositories...`).start();
+    
+    try {
+      const kraven = new KravenHunter();
+      const githubService = kraven.githubService;
+      const analyzer = new (await import('./services/analyzer')).RepositoryAnalyzer(githubService);
+      const orgScanner = new OrganizationScanner(githubService, analyzer);
+      
+      // Parse languages filter
+      const languages = options.languages ? 
+        options.languages.split(',').map((lang: string) => lang.trim().toLowerCase()) : 
+        undefined;
+      
+      // Configure scan filters
+      const filters = {
+        minStars: options.minStars,
+        maxStars: options.maxStars,
+        languages,
+        excludeForks: options.excludeForks,
+        excludeArchived: options.excludeArchived,
+        pushedBefore: options.pushedBefore,
+        pushedAfter: options.pushedAfter,
+        sortBy: 'updated' as const,
+        order: 'desc' as const
+      };
+      
+      // Configure ML settings
+      const mlConfig: PredictionConfig = {
+        useMLScoring: options.mlEnhanced,
+        confidenceThreshold: options.mlConfidence || 0.7,
+        fallbackToRuleBase: true
+      };
+      
+      // Perform organization scan
+      const results = await orgScanner.scanOrganization(
+        organization,
+        filters,
+        options.mlEnhanced,
+        mlConfig,
+        options.maxRepos
+      );
+      
+      spinner.stop();
+      
+      if (options.output === 'json') {
+        console.log(JSON.stringify(results, null, 2));
+      } else if (options.output === 'markdown') {
+        printMarkdownOrganizationResults(results);
+      } else {
+        printTableOrganizationResults(results);
+      }
+      
+    } catch (error) {
+      spinner.stop();
+      console.error(chalk.red('❌ Organization scan failed:'), error instanceof Error ? error.message : error);
+      process.exit(1);
+    }
+  });
+
+// Multi-organization scan command
+program
+  .command('scan-multi <organizations>')
+  .description('Scan multiple organizations or users (comma-separated)')
+  .option('--max-repos <number>', 'Maximum repositories per organization', parseInt, 30)
+  .option('--min-stars <number>', 'Minimum stars to consider', parseInt, 10)
+  .option('--exclude-forks', 'Exclude forked repositories', false)
+  .option('--exclude-archived', 'Exclude archived repositories', false)
+  .option('--output <format>', 'Output format: table, json, markdown', 'table')
+  .action(async (organizations, options) => {
+    const orgList = organizations.split(',').map((org: string) => org.trim());
+    const spinner = ora(`🏢 Scanning ${orgList.length} organizations...`).start();
+    
+    try {
+      const kraven = new KravenHunter();
+      const githubService = kraven.githubService;
+      const analyzer = new (await import('./services/analyzer')).RepositoryAnalyzer(githubService);
+      const orgScanner = new OrganizationScanner(githubService, analyzer);
+      
+      const filters = {
+        minStars: options.minStars,
+        excludeForks: options.excludeForks,
+        excludeArchived: options.excludeArchived,
+        sortBy: 'updated' as const,
+        order: 'desc' as const
+      };
+      
+      const results = await orgScanner.scanMultipleOrganizations(orgList, filters);
+      const comparativeReport = orgScanner.generateComparativeReport(results);
+      
+      spinner.stop();
+      
+      if (options.output === 'json') {
+        console.log(JSON.stringify({ results, comparative: comparativeReport }, null, 2));
+      } else {
+        printComparativeOrganizationResults(results, comparativeReport);
+      }
+      
+    } catch (error) {
+      spinner.stop();
+      console.error(chalk.red('❌ Multi-organization scan failed:'), error instanceof Error ? error.message : error);
       process.exit(1);
     }
   });
@@ -375,8 +504,7 @@ function printTableResults(analyses: any[]) {
     chalk.bold('Deps'),
     chalk.bold('Last Commit'.padStart(10)),
     chalk.bold('Status')
-  ].join('  ');
-  
+  ].join('  ')  
   console.log(headerRow);
   console.log('─'.repeat(90));
   

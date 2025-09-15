@@ -448,55 +448,118 @@ export class MLTrainer {
   }
 
   /**
-   * Simple linear regression implementation
+   * Improved linear regression with feature scaling and better accuracy calculation
    */
   private async trainLinearRegression(features: number[][], labels: number[]): Promise<any> {
-    // This is a simplified implementation
-    // In production, you'd use a proper ML library like TensorFlow.js
-    
     if (features.length === 0 || features[0].length === 0) {
       throw new Error('No features provided for training');
     }
     
-    const numFeatures = features[0].length;
-    const weights = new Array(numFeatures).fill(0);
-    const learningRate = 0.01;
-    const epochs = 1000;
+    // Scale features for better training
+    const scaledFeatures = this.scaleFeatures(features);
     
-    // Simple gradient descent
+    const numFeatures = scaledFeatures[0].length;
+    let weights = new Array(numFeatures).fill(0);
+    const learningRate = 0.001; // Lower learning rate for stability
+    const epochs = 3000; // More epochs
+    const regularization = 0.01; // L2 regularization
+    
+    let bestWeights = [...weights];
+    let bestLoss = Infinity;
+    
+    // Improved gradient descent with regularization
     for (let epoch = 0; epoch < epochs; epoch++) {
-      let totalError = 0;
+      let totalLoss = 0;
       
-      for (let i = 0; i < features.length; i++) {
-        const prediction = this.predict(features[i], weights);
+      for (let i = 0; i < scaledFeatures.length; i++) {
+        const prediction = this.predict(scaledFeatures[i], weights);
         const error = labels[i] - prediction;
-        totalError += error * error;
+        totalLoss += error * error;
         
-        // Update weights
+        // Update weights with regularization
         for (let j = 0; j < weights.length; j++) {
-          weights[j] += learningRate * error * features[i][j];
+          const gradient = error * scaledFeatures[i][j];
+          const regularizationTerm = regularization * weights[j];
+          weights[j] += learningRate * (gradient - regularizationTerm);
         }
       }
       
+      // Track best weights
+      const avgLoss = totalLoss / scaledFeatures.length;
+      if (avgLoss < bestLoss) {
+        bestLoss = avgLoss;
+        bestWeights = [...weights];
+      }
+      
       // Early stopping if converged
-      if (totalError < 0.001) break;
+      if (avgLoss < 0.01) {
+        console.log(`  Converged at epoch ${epoch} with loss ${avgLoss.toFixed(4)}`);
+        break;
+      }
     }
     
-    // Calculate accuracy (simplified)
-    let correctPredictions = 0;
-    for (let i = 0; i < features.length; i++) {
-      const prediction = this.predict(features[i], weights);
-      const error = Math.abs(labels[i] - prediction);
-      if (error < 0.1) correctPredictions++;
-    }
+    // Calculate R-squared for better accuracy measure
+    const predictions = scaledFeatures.map(feature => this.predict(feature, bestWeights));
+    const accuracy = this.calculateRSquared(predictions, labels);
     
-    const accuracy = correctPredictions / features.length;
+    console.log(`  Final accuracy (R²): ${Math.round(accuracy * 100)}%`);
     
     return {
-      weights,
-      accuracy,
-      type: 'linear_regression'
+      weights: bestWeights,
+      accuracy: Math.max(0, accuracy), // Ensure non-negative
+      type: 'improved_linear_regression',
+      loss: bestLoss
     };
+  }
+
+  /**
+   * Scale features to improve training
+   */
+  private scaleFeatures(features: number[][]): number[][] {
+    const numFeatures = features[0].length;
+    const means = new Array(numFeatures);
+    const stds = new Array(numFeatures);
+    
+    // Calculate means
+    for (let i = 0; i < numFeatures; i++) {
+      means[i] = features.reduce((sum, feature) => sum + feature[i], 0) / features.length;
+    }
+    
+    // Calculate standard deviations
+    for (let i = 0; i < numFeatures; i++) {
+      const variance = features.reduce((sum, feature) => 
+        sum + Math.pow(feature[i] - means[i], 2), 0
+      ) / features.length;
+      stds[i] = Math.sqrt(variance) || 1; // Avoid division by zero
+    }
+    
+    // Apply scaling
+    return features.map(feature => 
+      feature.map((value, i) => (value - means[i]) / stds[i])
+    );
+  }
+
+  /**
+   * Calculate R-squared for regression accuracy
+   */
+  private calculateRSquared(predictions: number[], actual: number[]): number {
+    if (predictions.length !== actual.length || predictions.length === 0) {
+      return 0;
+    }
+    
+    const actualMean = actual.reduce((sum, val) => sum + val, 0) / actual.length;
+    
+    let totalSumSquares = 0;
+    let residualSumSquares = 0;
+    
+    for (let i = 0; i < actual.length; i++) {
+      totalSumSquares += Math.pow(actual[i] - actualMean, 2);
+      residualSumSquares += Math.pow(actual[i] - predictions[i], 2);
+    }
+    
+    if (totalSumSquares === 0) return 0;
+    
+    return 1 - (residualSumSquares / totalSumSquares);
   }
 
   /**
