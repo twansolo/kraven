@@ -1,0 +1,30 @@
+# Robots.txt for Kraven Project Hunter
+# https://twansolo.github.io/kraven/
+
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://twansolo.github.io/kraven/sitemap.xml
+
+# Crawl-delay for respectful crawling
+Crawl-delay: 1
+
+# Disallow crawling of certain file types that aren't useful for SEO
+Disallow: *.js$
+Disallow: *.css$
+Disallow: *.json$
+Disallow: /node_modules/
+Disallow: /dist/
+
+# Allow crawling of main content
+Allow: /index.html
+Allow: /
+Allow: /#hunt
+Allow: /#forks
+Allow: /#analyze
+
+# Additional information
+# This is an open source project discovery tool
+# Repository: https://github.com/twansolo/kraven
+# npm package: https://www.npmjs.com/package/kraven

@@ -28,6 +28,24 @@ body {
     min-height: 100vh;
 }
 
+/* Accessibility improvements */
+.skip-to-main {
+    position: absolute;
+    top: -40px;
+    left: 6px;
+    background: var(--primary-color);
+    color: white;
+    padding: 8px;
+    text-decoration: none;
+    border-radius: 4px;
+    z-index: 1000;
+    transition: top 0.3s;
+}
+
+.skip-to-main:focus {
+    top: 6px;
+}
+
 .container {
     max-width: 1200px;
     margin: 0 auto;

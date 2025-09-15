@@ -3,20 +3,119 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🕷️ Kraven - Hunt Abandoned GitHub Projects</title>
-    <meta name="description" content="Discover abandoned GitHub repositories ripe for revival. Find unmaintained projects with active communities waiting for new maintainers.">
+    
+    <!-- Primary Meta Tags -->
+    <title>🕷️ Kraven - Hunt Abandoned GitHub Projects | Open Source Project Discovery Tool</title>
+    <meta name="title" content="🕷️ Kraven - Hunt Abandoned GitHub Projects | Open Source Project Discovery Tool">
+    <meta name="description" content="Discover abandoned GitHub repositories ripe for revival. Find unmaintained projects with active communities waiting for new maintainers. Free open source tool with CLI and web interface.">
+    <meta name="keywords" content="abandoned github projects, open source discovery, repository analysis, github hunter, fork analysis, unmaintained projects, project revival, dependency analysis, github tool, cli tool, typescript, javascript">
+    <meta name="author" content="Kraven Project">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://twansolo.github.io/kraven/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://twansolo.github.io/kraven/">
+    <meta property="og:title" content="🕷️ Kraven - Hunt Abandoned GitHub Projects">
+    <meta property="og:description" content="Discover abandoned GitHub repositories ripe for revival. Find unmaintained projects with active communities waiting for new maintainers.">
+    <meta property="og:image" content="https://twansolo.github.io/kraven/images/kraven-og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:site_name" content="Kraven Project Hunter">
+    <meta property="og:locale" content="en_US">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://twansolo.github.io/kraven/">
+    <meta property="twitter:title" content="🕷️ Kraven - Hunt Abandoned GitHub Projects">
+    <meta property="twitter:description" content="Discover abandoned GitHub repositories ripe for revival. Find unmaintained projects with active communities waiting for new maintainers.">
+    <meta property="twitter:image" content="https://twansolo.github.io/kraven/images/kraven-og-image.png">
+    <meta name="twitter:creator" content="@twansolo">
+    <meta name="twitter:site" content="@twansolo">
+    
+    <!-- Additional SEO Meta Tags -->
+    <meta name="theme-color" content="#ff6b35">
+    <meta name="msapplication-TileColor" content="#ff6b35">
+    <meta name="application-name" content="Kraven">
+    <meta name="apple-mobile-web-app-title" content="Kraven">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <!-- Favicon and Icons -->
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="images/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="images/apple-touch-icon.png">
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Preconnect for Performance -->
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <link rel="preconnect" href="https://api.github.com">
+    
+    <!-- Stylesheets -->
     <link rel="stylesheet" href="css/style.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Kraven",
+      "alternateName": "Kraven Project Hunter",
+      "description": "Hunt abandoned GitHub projects and discover repositories ripe for revival. Analyze project health, find active forks, and identify unmaintained projects with active communities.",
+      "url": "https://twansolo.github.io/kraven/",
+      "image": "https://twansolo.github.io/kraven/images/kraven-og-image.png",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Web Browser, Windows, macOS, Linux",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "author": {
+        "@type": "Organization",
+        "name": "Kraven Project",
+        "url": "https://github.com/twansolo/kraven"
+      },
+      "downloadUrl": "https://www.npmjs.com/package/kraven",
+      "installUrl": "https://www.npmjs.com/package/kraven",
+      "screenshot": "https://twansolo.github.io/kraven/images/kraven-screenshot.png",
+      "softwareVersion": "1.0.0",
+      "datePublished": "2024-01-01",
+      "dateModified": "2024-12-15",
+      "license": "https://opensource.org/licenses/MIT",
+      "programmingLanguage": "TypeScript",
+      "runtimePlatform": "Node.js",
+      "keywords": "github, open source, repository analysis, abandoned projects, fork analysis, dependency analysis, cli tool",
+      "featureList": [
+        "Search abandoned GitHub repositories",
+        "Analyze project health and revival potential",
+        "Compare repository forks",
+        "Security vulnerability scanning",
+        "Dependency health analysis",
+        "CLI and web interface",
+        "Machine learning enhanced scoring",
+        "Organization scanning"
+      ]
+    }
+    </script>
+    
+    <!-- Analytics and Performance -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
 </head>
 <body>
+    <!-- Skip to main content for accessibility -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
     <!-- Hero Section -->
-    <section class="hero-section">
+    <header class="hero-section" role="banner">
         <div class="hero-content">
-            <div class="hero-title">
-                <span class="spider">🕷️</span>
+            <h1 class="hero-title">
+                <span class="spider" aria-label="Spider emoji">🕷️</span>
                 <span class="title-text">Kraven</span>
-            </div>
+            </h1>
             <p class="hero-subtitle">Hunt Abandoned GitHub Projects</p>
             <p class="hero-description">
                 Discover unmaintained repositories with active communities, high-quality code, and real potential for revival. 
