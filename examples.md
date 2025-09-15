@@ -65,6 +65,33 @@ kraven forks jquery/jquery-ui --sort health --output markdown
 kraven forks facebook/create-react-app --sort stars --max-forks 15
 ```
 
+## Machine Learning Commands
+
+### Train ML models for enhanced scoring
+```bash
+kraven train --sample-size 100 --popular-repos
+```
+
+### Train with custom repository list
+```bash
+kraven train --repositories my-repos.txt
+```
+
+### Check ML model status
+```bash
+kraven ml-info
+```
+
+### Use ML-enhanced hunting
+```bash
+kraven hunt --language typescript --ml-enhanced --ml-confidence 0.8
+```
+
+### ML-enhanced analysis
+```bash
+kraven analyze microsoft/typescript --ml-enhanced
+```
+
 ## Utility Commands
 
 ### Check API rate limits
@@ -128,3 +155,17 @@ kraven hunt --category build-tool --min-stars 200 --pushed-before 2023-01-01
 - **⚠️ Fair**: Some outdated dependencies, manageable
 - **👎 Poor**: Many outdated dependencies
 - **🚨 Critical**: Security vulnerabilities present
+
+### ML Prediction Indicators
+- **🧠 High Confidence**: ML predictions with >80% confidence
+- **🤖 Medium Confidence**: ML predictions with 60-80% confidence
+- **🔮 Low Confidence**: ML predictions with <60% confidence
+- **❓ No ML**: Rule-based analysis only (no trained models)
+
+### ML-Enhanced Features
+- **Abandonment Probability**: AI-predicted likelihood of abandonment (0-100%)
+- **Revival Success Probability**: AI-predicted success chance for revival (0-100%)
+- **Estimated Effort**: AI-predicted days of work required (1-365 days)
+- **Community Adoption**: AI-predicted likelihood of community acceptance (0-100%)
+- **Key Factors**: Most important factors driving the prediction
+- **Scoring Method**: rule-based, ml-enhanced, or hybrid

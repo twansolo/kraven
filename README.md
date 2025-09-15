@@ -41,6 +41,13 @@ Kraven identifies repositories that:
 - **Community Metrics**: Engagement and activity analysis
 - **Technical Assessment**: Complexity and market relevance
 
+### 🤖 **Machine Learning Enhanced**
+- **AI-Powered Predictions**: ML models trained on thousands of repositories
+- **Abandonment Probability**: Precise AI prediction of abandonment likelihood
+- **Revival Success Estimation**: Predict probability of successful revival
+- **Effort Prediction**: AI estimates days of work required for revival
+- **Pattern Recognition**: Identifies subtle abandonment signals humans miss
+
 ### 🎨 **Rich Output**
 - **Multiple Formats**: Table, JSON, and Markdown export
 - **Status Classification**: 🎯 PRIME, ⚠️ MAYBE, ❌ SKIP
@@ -87,6 +94,18 @@ kraven analyze owner/repository-name
 ### Generate Report
 ```bash
 kraven report --format json --output results.json
+```
+
+### Machine Learning Enhanced Analysis
+```bash
+# Train ML models (one-time setup)
+kraven train --sample-size 200
+
+# Use ML-enhanced hunting
+kraven hunt --language typescript --ml-enhanced --ml-confidence 0.8
+
+# ML-powered analysis with effort estimation
+kraven analyze microsoft/typescript --ml-enhanced
 ```
 
 ## 🔍 Search Categories
