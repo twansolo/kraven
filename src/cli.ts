@@ -947,7 +947,7 @@ async function generateTrainingRepositories(githubService: any, sampleSize: numb
  * Print organization scan results in table format
  */
 function printTableOrganizationResults(results: any) {
-  const { organization, totalRepositories, scannedRepositories, abandonedProjects, primeRevivalCandidates, healthSummary, insights } = results;
+  const { organization, totalRepositories, scannedRepositories, abandonedProjects, primeRevivalCandidates, healthSummary, techDebtMetrics, insights } = results;
   
   console.log(chalk.blue.bold(`\n🏢 Organization Scan: ${organization.name || organization.login}\n`));
   
@@ -967,6 +967,34 @@ function printTableOrganizationResults(results: any) {
   console.log(`⚠️ Fair: ${healthSummary.fair}`);
   console.log(`👎 Poor: ${healthSummary.poor}`);
   console.log(`🚨 Critical: ${healthSummary.critical}\n`);
+
+  // Tech Debt Impact Analysis
+  if (techDebtMetrics) {
+    console.log(chalk.red.bold('💰 Tech Debt Financial Impact:'));
+    console.log(`💵 Estimated Annual Cost: ${chalk.red('$' + techDebtMetrics.totalCostImpact.estimatedAnnualCost.toLocaleString())}`);
+    console.log(`📊 Cost per Repository: ${chalk.yellow('$' + techDebtMetrics.totalCostImpact.maintenanceCostPerRepo.toLocaleString())}/month`);
+    console.log(`🚨 Security Incident Risk: ${chalk.red('$' + techDebtMetrics.totalCostImpact.securityIncidentCost.toLocaleString())}`);
+    console.log(`⏱️ Opportunity Cost: ${chalk.yellow('$' + techDebtMetrics.totalCostImpact.opportunityCost.toLocaleString())}/year\n`);
+
+    console.log(chalk.blue.bold('⏰ Time Investment Required:'));
+    console.log(`🔧 Total Maintenance Hours: ${chalk.cyan(techDebtMetrics.timeEstimates.totalMaintenanceHours.toLocaleString())} hours`);
+    console.log(`📈 Average per Repository: ${chalk.cyan(techDebtMetrics.timeEstimates.averageHoursPerRepo)} hours`);
+    console.log(`🚨 Critical Issues: ${chalk.red(techDebtMetrics.timeEstimates.criticalIssueHours)} hours`);
+    console.log(`📦 Dependency Updates: ${chalk.yellow(techDebtMetrics.timeEstimates.dependencyUpdateHours)} hours\n`);
+
+    console.log(chalk.red.bold('🛡️ Security Risk Assessment:'));
+    console.log(`🎯 Overall Risk Score: ${getSecurityRiskColor(techDebtMetrics.securityRisk.riskScore)(techDebtMetrics.securityRisk.riskScore + '/100')}`);
+    console.log(`🚨 Critical Vulnerabilities: ${chalk.red(techDebtMetrics.securityRisk.criticalVulnerabilities)}`);
+    console.log(`⚠️ High Vulnerabilities: ${chalk.yellow(techDebtMetrics.securityRisk.highVulnerabilities)}`);
+    console.log(`📦 Outdated Dependencies: ${chalk.magenta(techDebtMetrics.securityRisk.outdatedDependencies)}`);
+    console.log(`⚖️ Compliance Risk: ${getComplianceRiskColor(techDebtMetrics.securityRisk.complianceRisk)(techDebtMetrics.securityRisk.complianceRisk.toUpperCase())}\n`);
+
+    console.log(chalk.magenta.bold('📈 Business Impact:'));
+    console.log(`📉 Productivity Loss: ${chalk.red(techDebtMetrics.businessImpact.productivityLoss + '%')}`);
+    console.log(`🚀 Deployment Risk: ${chalk.yellow(techDebtMetrics.businessImpact.deploymentRisk + '/100')}`);
+    console.log(`👥 Talent Retention Impact: ${getTalentRetentionColor(techDebtMetrics.businessImpact.talentRetention)(techDebtMetrics.businessImpact.talentRetention + '/100')}`);
+    console.log(`⏳ Innovation Delay: ${chalk.cyan(techDebtMetrics.businessImpact.innovationDelay)} months\n`);
+  }
   
   // Language breakdown
   if (Object.keys(results.languageBreakdown).length > 0) {
@@ -1047,7 +1075,7 @@ function printTableOrganizationResults(results: any) {
  * Print markdown organization results
  */
 function printMarkdownOrganizationResults(results: any) {
-  const { organization, totalRepositories, scannedRepositories, abandonedProjects, primeRevivalCandidates } = results;
+  const { organization, totalRepositories, scannedRepositories, abandonedProjects, primeRevivalCandidates, techDebtMetrics } = results;
   
   console.log(`# 🏢 Organization Scan: ${organization.name || organization.login}\n`);
   console.log(`[View on GitHub](${organization.html_url})\n`);
@@ -1059,6 +1087,42 @@ function printMarkdownOrganizationResults(results: any) {
   console.log(`- **Abandoned**: ${abandonedProjects.length} (${Math.round((abandonedProjects.length / scannedRepositories) * 100)}%)`);
   console.log(`- **Prime Revival Candidates**: ${primeRevivalCandidates.length}`);
   console.log(`- **Execution Time**: ${Math.round(results.executionTime / 1000)}s\n`);
+  
+  // Tech Debt Impact Analysis
+  if (techDebtMetrics) {
+    console.log('## 💰 Tech Debt Financial Impact\n');
+    console.log(`| Metric | Value |`);
+    console.log(`|--------|-------|`);
+    console.log(`| **Estimated Annual Cost** | $${techDebtMetrics.totalCostImpact.estimatedAnnualCost.toLocaleString()} |`);
+    console.log(`| **Cost per Repository** | $${techDebtMetrics.totalCostImpact.maintenanceCostPerRepo.toLocaleString()}/month |`);
+    console.log(`| **Security Incident Risk** | $${techDebtMetrics.totalCostImpact.securityIncidentCost.toLocaleString()} |`);
+    console.log(`| **Opportunity Cost** | $${techDebtMetrics.totalCostImpact.opportunityCost.toLocaleString()}/year |\n`);
+
+    console.log('## ⏰ Time Investment Required\n');
+    console.log(`| Task | Hours |`);
+    console.log(`|------|-------|`);
+    console.log(`| **Total Maintenance** | ${techDebtMetrics.timeEstimates.totalMaintenanceHours.toLocaleString()} hours |`);
+    console.log(`| **Average per Repository** | ${techDebtMetrics.timeEstimates.averageHoursPerRepo} hours |`);
+    console.log(`| **Critical Issues** | ${techDebtMetrics.timeEstimates.criticalIssueHours} hours |`);
+    console.log(`| **Dependency Updates** | ${techDebtMetrics.timeEstimates.dependencyUpdateHours} hours |\n`);
+
+    console.log('## 🛡️ Security Risk Assessment\n');
+    console.log(`| Risk Factor | Value |`);
+    console.log(`|-------------|-------|`);
+    console.log(`| **Overall Risk Score** | ${techDebtMetrics.securityRisk.riskScore}/100 |`);
+    console.log(`| **Critical Vulnerabilities** | ${techDebtMetrics.securityRisk.criticalVulnerabilities} |`);
+    console.log(`| **High Vulnerabilities** | ${techDebtMetrics.securityRisk.highVulnerabilities} |`);
+    console.log(`| **Outdated Dependencies** | ${techDebtMetrics.securityRisk.outdatedDependencies} |`);
+    console.log(`| **Compliance Risk** | ${techDebtMetrics.securityRisk.complianceRisk.toUpperCase()} |\n`);
+
+    console.log('## 📈 Business Impact\n');
+    console.log(`| Impact Area | Value |`);
+    console.log(`|-------------|-------|`);
+    console.log(`| **Productivity Loss** | ${techDebtMetrics.businessImpact.productivityLoss}% |`);
+    console.log(`| **Deployment Risk** | ${techDebtMetrics.businessImpact.deploymentRisk}/100 |`);
+    console.log(`| **Talent Retention Impact** | ${techDebtMetrics.businessImpact.talentRetention}/100 |`);
+    console.log(`| **Innovation Delay** | ${techDebtMetrics.businessImpact.innovationDelay} months |\n`);
+  }
   
   if (results.insights.length > 0) {
     console.log('## 💡 Key Insights\n');
@@ -1148,6 +1212,34 @@ function printComparativeOrganizationResults(results: any[], comparative: any) {
     console.log(chalk.bold('\n💡 Recommendations:'));
     comparative.recommendations.forEach((rec: string) => console.log(`• ${rec}`));
   }
+}
+
+/**
+ * Helper functions for tech debt metrics color coding
+ */
+function getSecurityRiskColor(score: number) {
+  if (score >= 80) return chalk.red.bold;
+  if (score >= 60) return chalk.red;
+  if (score >= 40) return chalk.yellow;
+  if (score >= 20) return chalk.blue;
+  return chalk.green;
+}
+
+function getComplianceRiskColor(risk: string) {
+  switch (risk) {
+    case 'critical': return chalk.red.bold;
+    case 'high': return chalk.red;
+    case 'medium': return chalk.yellow;
+    case 'low': return chalk.green;
+    default: return chalk.gray;
+  }
+}
+
+function getTalentRetentionColor(score: number) {
+  if (score >= 80) return chalk.green;
+  if (score >= 60) return chalk.yellow;
+  if (score >= 40) return chalk.red;
+  return chalk.red.bold;
 }
 
 program.parse();

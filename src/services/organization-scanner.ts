@@ -33,6 +33,34 @@ export interface OrganizationScanFilters {
   order?: 'asc' | 'desc';
 }
 
+export interface TechDebtMetrics {
+  totalCostImpact: {
+    estimatedAnnualCost: number; // USD per year
+    maintenanceCostPerRepo: number; // USD per repo per month
+    securityIncidentCost: number; // Potential cost of security breaches
+    opportunityCost: number; // Lost productivity due to outdated dependencies
+  };
+  timeEstimates: {
+    totalMaintenanceHours: number; // Hours needed to bring all repos up to date
+    averageHoursPerRepo: number; // Average hours per repository
+    criticalIssueHours: number; // Hours to fix critical security issues
+    dependencyUpdateHours: number; // Hours to update all dependencies
+  };
+  securityRisk: {
+    riskScore: number; // 0-100 overall security risk score
+    criticalVulnerabilities: number; // Number of critical CVEs
+    highVulnerabilities: number; // Number of high severity CVEs
+    outdatedDependencies: number; // Number of severely outdated dependencies
+    complianceRisk: 'low' | 'medium' | 'high' | 'critical'; // Regulatory compliance risk
+  };
+  businessImpact: {
+    productivityLoss: number; // Percentage of lost developer productivity
+    deploymentRisk: number; // Risk score for production deployments
+    talentRetention: number; // Impact on developer satisfaction (0-100)
+    innovationDelay: number; // Months of delayed feature development
+  };
+}
+
 export interface OrganizationScanResults {
   organization: OrganizationInfo;
   totalRepositories: number;
@@ -48,6 +76,7 @@ export interface OrganizationScanResults {
     critical: number;
   };
   languageBreakdown: { [language: string]: number };
+  techDebtMetrics: TechDebtMetrics; // New tech debt analysis
   insights: string[];
   recommendations: string[];
   executionTime: number;
@@ -336,8 +365,11 @@ export class OrganizationScanner {
       languageBreakdown[language] = (languageBreakdown[language] || 0) + 1;
     });
     
-    // Generate insights
-    const insights = this.generateInsightsList(orgInfo, analyses, abandonedProjects, primeRevivalCandidates);
+    // Calculate tech debt metrics first
+    const techDebtMetrics = this.calculateTechDebtMetrics(analyses, abandonedProjects, healthSummary);
+    
+    // Generate insights (including tech debt insights)
+    const insights = this.generateInsightsList(orgInfo, analyses, abandonedProjects, primeRevivalCandidates, techDebtMetrics);
     
     // Generate recommendations
     const recommendations = this.generateOrganizationRecommendations(orgInfo, analyses, abandonedProjects, healthSummary);
@@ -351,10 +383,114 @@ export class OrganizationScanner {
       primeRevivalCandidates,
       healthSummary,
       languageBreakdown,
+      techDebtMetrics,
       insights,
       recommendations,
       executionTime,
       timestamp: new Date().toISOString()
+    };
+  }
+
+  /**
+   * Calculate comprehensive tech debt metrics
+   */
+  private calculateTechDebtMetrics(
+    analyses: (RepositoryAnalysis | EnhancedRepositoryAnalysis)[],
+    abandonedProjects: (RepositoryAnalysis | EnhancedRepositoryAnalysis)[],
+    healthSummary: { excellent: number; good: number; fair: number; poor: number; critical: number }
+  ): TechDebtMetrics {
+    
+    // Base hourly rates for calculations (industry averages)
+    const DEVELOPER_HOURLY_RATE = 75; // USD per hour
+    const SECURITY_SPECIALIST_RATE = 125; // USD per hour
+    const DEVOPS_HOURLY_RATE = 85; // USD per hour
+    
+    // Calculate total stars and complexity indicators
+    const totalStars = analyses.reduce((sum, analysis) => sum + analysis.repository.stargazers_count, 0);
+    const avgStars = totalStars / analyses.length || 0;
+    const highValueRepos = analyses.filter(a => a.repository.stargazers_count > 500).length;
+    
+    // Time Estimates
+    const criticalRepos = healthSummary.critical;
+    const poorRepos = healthSummary.poor;
+    const fairRepos = healthSummary.fair;
+    
+    // Hours estimation based on repository health and complexity
+    const criticalIssueHours = criticalRepos * 16; // 2 days per critical repo
+    const dependencyUpdateHours = (poorRepos * 8) + (fairRepos * 4); // 1 day poor, half day fair
+    const abandonedProjectHours = abandonedProjects.length * 12; // 1.5 days per abandoned project
+    const totalMaintenanceHours = criticalIssueHours + dependencyUpdateHours + abandonedProjectHours;
+    const averageHoursPerRepo = totalMaintenanceHours / analyses.length;
+    
+    // Cost Calculations
+    const criticalSecurityCost = criticalRepos * SECURITY_SPECIALIST_RATE * 16;
+    const dependencyUpdateCost = dependencyUpdateHours * DEVELOPER_HOURLY_RATE;
+    const abandonedProjectCost = abandonedProjectHours * DEVELOPER_HOURLY_RATE;
+    
+    const monthlyMaintenanceCost = (poorRepos * 200) + (fairRepos * 100) + (criticalRepos * 500);
+    const estimatedAnnualCost = monthlyMaintenanceCost * 12;
+    const maintenanceCostPerRepo = monthlyMaintenanceCost / analyses.length;
+    
+    // Security incident cost estimation (based on industry data)
+    const baseIncidentCost = 50000; // Base cost of security incident
+    const reputationMultiplier = avgStars > 1000 ? 3 : avgStars > 100 ? 2 : 1;
+    const securityIncidentCost = criticalRepos * baseIncidentCost * reputationMultiplier;
+    
+    // Opportunity cost (lost productivity)
+    const productivityLossPercentage = Math.min(50, (poorRepos + criticalRepos) / analyses.length * 100);
+    const opportunityCost = (analyses.length * DEVELOPER_HOURLY_RATE * 40 * 52) * (productivityLossPercentage / 100);
+    
+    // Security Risk Assessment
+    const criticalVulnerabilities = criticalRepos * 2.5; // Estimate 2.5 critical CVEs per critical repo
+    const highVulnerabilities = (poorRepos + criticalRepos) * 1.8; // High severity issues
+    const outdatedDependencies = (poorRepos * 15) + (fairRepos * 8) + (criticalRepos * 25);
+    
+    // Risk score calculation (0-100)
+    const securityRiskScore = Math.min(100, 
+      (criticalRepos / analyses.length * 40) + 
+      (poorRepos / analyses.length * 25) + 
+      (abandonedProjects.length / analyses.length * 35)
+    );
+    
+    // Compliance risk assessment
+    let complianceRisk: 'low' | 'medium' | 'high' | 'critical';
+    if (criticalRepos > analyses.length * 0.3) complianceRisk = 'critical';
+    else if (criticalRepos > analyses.length * 0.15) complianceRisk = 'high';
+    else if (poorRepos > analyses.length * 0.4) complianceRisk = 'medium';
+    else complianceRisk = 'low';
+    
+    // Business Impact Calculations
+    const productivityLoss = Math.min(50, (abandonedProjects.length / analyses.length) * 100);
+    const deploymentRisk = Math.min(100, securityRiskScore * 0.8);
+    const talentRetention = Math.max(0, 100 - (productivityLoss * 1.5)); // Higher tech debt = lower satisfaction
+    const innovationDelay = Math.ceil((abandonedProjects.length / analyses.length) * 12); // Months
+    
+    return {
+      totalCostImpact: {
+        estimatedAnnualCost: Math.round(estimatedAnnualCost),
+        maintenanceCostPerRepo: Math.round(maintenanceCostPerRepo),
+        securityIncidentCost: Math.round(securityIncidentCost),
+        opportunityCost: Math.round(opportunityCost)
+      },
+      timeEstimates: {
+        totalMaintenanceHours: Math.round(totalMaintenanceHours),
+        averageHoursPerRepo: Math.round(averageHoursPerRepo * 10) / 10, // One decimal place
+        criticalIssueHours: Math.round(criticalIssueHours),
+        dependencyUpdateHours: Math.round(dependencyUpdateHours)
+      },
+      securityRisk: {
+        riskScore: Math.round(securityRiskScore),
+        criticalVulnerabilities: Math.round(criticalVulnerabilities),
+        highVulnerabilities: Math.round(highVulnerabilities),
+        outdatedDependencies: Math.round(outdatedDependencies),
+        complianceRisk
+      },
+      businessImpact: {
+        productivityLoss: Math.round(productivityLoss),
+        deploymentRisk: Math.round(deploymentRisk),
+        talentRetention: Math.round(talentRetention),
+        innovationDelay
+      }
     };
   }
 
@@ -365,7 +501,8 @@ export class OrganizationScanner {
     orgInfo: OrganizationInfo,
     analyses: (RepositoryAnalysis | EnhancedRepositoryAnalysis)[],
     abandonedProjects: (RepositoryAnalysis | EnhancedRepositoryAnalysis)[],
-    primeRevivalCandidates: (RepositoryAnalysis | EnhancedRepositoryAnalysis)[]
+    primeRevivalCandidates: (RepositoryAnalysis | EnhancedRepositoryAnalysis)[],
+    techDebtMetrics: TechDebtMetrics
   ): string[] {
     const insights: string[] = [];
     
@@ -413,6 +550,37 @@ export class OrganizationScanner {
     const criticalProjects = analyses.filter(a => a.dependencyHealth === 'critical').length;
     if (criticalProjects > 0) {
       insights.push(`🚨 ${criticalProjects} repositories have critical security vulnerabilities`);
+    }
+    
+    // Tech debt financial insights
+    if (techDebtMetrics.totalCostImpact.estimatedAnnualCost > 100000) {
+      insights.push(`💰 High tech debt cost: $${(techDebtMetrics.totalCostImpact.estimatedAnnualCost / 1000).toFixed(0)}K annual maintenance burden`);
+    }
+    
+    if (techDebtMetrics.timeEstimates.totalMaintenanceHours > 1000) {
+      insights.push(`⏰ Significant time investment needed: ${Math.round(techDebtMetrics.timeEstimates.totalMaintenanceHours / 40)} developer-weeks to address tech debt`);
+    }
+    
+    // Security risk insights
+    if (techDebtMetrics.securityRisk.riskScore > 70) {
+      insights.push(`🛡️ High security risk (${techDebtMetrics.securityRisk.riskScore}/100) - immediate attention required`);
+    }
+    
+    if (techDebtMetrics.securityRisk.complianceRisk === 'critical' || techDebtMetrics.securityRisk.complianceRisk === 'high') {
+      insights.push(`⚖️ ${techDebtMetrics.securityRisk.complianceRisk.toUpperCase()} compliance risk - regulatory concerns possible`);
+    }
+    
+    // Business impact insights
+    if (techDebtMetrics.businessImpact.productivityLoss > 20) {
+      insights.push(`📉 Developer productivity reduced by ${techDebtMetrics.businessImpact.productivityLoss}% due to tech debt`);
+    }
+    
+    if (techDebtMetrics.businessImpact.talentRetention < 70) {
+      insights.push(`👥 Tech debt may impact talent retention (satisfaction score: ${techDebtMetrics.businessImpact.talentRetention}/100)`);
+    }
+    
+    if (techDebtMetrics.businessImpact.innovationDelay > 6) {
+      insights.push(`🚀 Innovation delayed by ~${techDebtMetrics.businessImpact.innovationDelay} months due to maintenance burden`);
     }
     
     return insights;

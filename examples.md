@@ -94,14 +94,24 @@ kraven analyze microsoft/typescript --ml-enhanced
 
 ## Organization & User Scanning
 
-### Scan entire organization
+### Scan entire organization with tech debt analysis
 ```bash
 kraven scan microsoft --max-repos 20 --min-stars 100
+```
+
+### Generate comprehensive tech debt report
+```bash
+kraven scan netflix --max-repos 50 --min-stars 200 --output markdown > netflix-tech-debt-report.md
 ```
 
 ### Scan user repositories
 ```bash
 kraven scan torvalds --max-repos 10 --exclude-forks
+```
+
+### Focus on high-risk repositories
+```bash
+kraven scan uber --max-repos 30 --min-stars 50 --pushed-before 2022-01-01
 ```
 
 ### Multi-organization comparison
@@ -146,7 +156,81 @@ kraven hunt --category build-tool --min-stars 200 --pushed-before 2023-01-01
 4. **Consider complexity**: Start with smaller projects for easier revival
 5. **Check licensing**: Ensure you can legally fork and maintain the project
 
+## Tech Debt Metrics Analysis
+
+### Understanding Financial Impact
+The organization scan now includes comprehensive tech debt cost analysis:
+
+```bash
+# Get detailed tech debt metrics
+kraven scan myorg --max-repos 50 --output markdown
+```
+
+**Financial Metrics Included:**
+- **Annual Cost**: Total yearly maintenance burden
+- **Cost per Repository**: Monthly maintenance cost breakdown
+- **Security Incident Risk**: Potential breach costs
+- **Opportunity Cost**: Lost productivity value
+
+### Time Investment Analysis
+```bash
+# Focus on time estimates for planning
+kraven scan myorg --max-repos 30 --min-stars 100
+```
+
+**Time Metrics Included:**
+- **Total Maintenance Hours**: Complete remediation time
+- **Average per Repository**: Planning estimates per repo
+- **Critical Issue Hours**: Immediate security fixes needed
+- **Dependency Update Hours**: Library modernization time
+
+### Security Risk Quantification
+```bash
+# Security-focused analysis
+kraven scan myorg --max-repos 25 --exclude-forks --pushed-before 2022-01-01
+```
+
+**Security Metrics Included:**
+- **Risk Score (0-100)**: Overall security posture
+- **Critical Vulnerabilities**: High-priority CVEs estimated
+- **Compliance Risk**: Regulatory impact assessment
+- **Outdated Dependencies**: Security-relevant package count
+
+### Business Impact Assessment
+```bash
+# Business stakeholder report
+kraven scan myorg --output markdown > business-impact-report.md
+```
+
+**Business Metrics Included:**
+- **Productivity Loss %**: Developer efficiency impact
+- **Deployment Risk**: Production stability concerns
+- **Talent Retention**: Developer satisfaction impact
+- **Innovation Delay**: Feature development delays
+
 ## Interpreting Results
+
+### Tech Debt Risk Levels
+
+#### 🟢 Low Risk (0-30/100)
+- **Annual Cost**: <$50,000
+- **Maintenance**: <500 hours
+- **Action**: Maintain current practices
+
+#### 🟡 Medium Risk (31-60/100)
+- **Annual Cost**: $50,000-$200,000
+- **Maintenance**: 500-2,000 hours
+- **Action**: Create remediation plan
+
+#### 🟠 High Risk (61-80/100)
+- **Annual Cost**: $200,000-$500,000
+- **Maintenance**: 2,000-5,000 hours
+- **Action**: Immediate attention required
+
+#### 🔴 Critical Risk (81-100/100)
+- **Annual Cost**: >$500,000
+- **Maintenance**: >5,000 hours
+- **Action**: Emergency response needed
 
 ### Abandonment Score (0-100%)
 - **0-30%**: Active project
