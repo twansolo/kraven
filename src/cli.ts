@@ -7,6 +7,7 @@ import * as dotenv from 'dotenv';
 import * as path from 'path';
 import * as fs from 'fs';
 import { KravenHunter } from './kraven';
+import { GitHubAuthConfig } from './services/github';
 import { SearchFilters, ProjectCategory, ForkAnalysisOptions, PredictionConfig } from './types';
 import { ForkAnalyzer } from './services/fork-analyzer';
 import { MLTrainer } from './services/ml-trainer';
@@ -49,12 +50,32 @@ function loadEnvironmentVariables() {
 // Load environment variables
 loadEnvironmentVariables();
 
+/**
+ * Create GitHub authentication configuration from CLI options
+ */
+function createGitHubAuthFromOptions(options: any): GitHubAuthConfig | undefined {
+  if (options.oauthToken) {
+    return { oauthToken: options.oauthToken, tokenType: 'oauth' };
+  }
+  
+  if (options.token) {
+    const tokenType = options.tokenType === 'oauth' ? 'oauth' : 'pat';
+    return { token: options.token, tokenType };
+  }
+  
+  // Return undefined to use default environment variable loading
+  return undefined;
+}
+
 const program = new Command();
 
 program
   .name('kraven')
   .description('🕷️ Hunt abandoned GitHub repositories ripe for revival')
-  .version('1.0.0');
+  .version('1.0.0')
+  .option('--token <token>', 'GitHub personal access token or OAuth token')
+  .option('--oauth-token <token>', 'GitHub OAuth token (alternative to --token)')
+  .option('--token-type <type>', 'Token type: pat or oauth (auto-detected if not specified)', /^(pat|oauth)$/i);
 
 // Hunt command
 program
@@ -74,7 +95,7 @@ program
   .option('--ml-enhanced', 'Use machine learning enhanced scoring (requires trained models)', false)
   .option('--ml-confidence <threshold>', 'ML confidence threshold (0.1-1.0)', parseFloat, 0.7)
   .option('--include-private', 'Include private repositories (requires repo scope token)', false)
-  .action(async (options) => {
+  .action(async (options, command) => {
     // Only show spinner for non-JSON output to keep JSON clean
     const spinner = options.output === 'json' ? null : ora('🕷️ Kraven is hunting...').start();
     
@@ -91,7 +112,9 @@ program
         order: options.order
       };
 
-      const kraven = new KravenHunter();
+      // Create GitHub auth configuration from global options
+      const authConfig = createGitHubAuthFromOptions(command.parent?.opts() || {});
+      const kraven = new KravenHunter(authConfig);
       
       // Configure ML settings
       const mlConfig: PredictionConfig = {
@@ -131,11 +154,13 @@ program
   .option('--output <format>', 'Output format: table, json, markdown', 'table')
   .option('--ml-enhanced', 'Use machine learning enhanced analysis', false)
   .option('--ml-confidence <threshold>', 'ML confidence threshold (0.1-1.0)', parseFloat, 0.7)
-  .action(async (repository, options) => {
+  .action(async (repository, options, command) => {
     const spinner = ora(`🔍 Analyzing ${repository}...`).start();
     
     try {
-      const kraven = new KravenHunter();
+      // Create GitHub auth configuration from global options
+      const authConfig = createGitHubAuthFromOptions(command.parent?.opts() || {});
+      const kraven = new KravenHunter(authConfig);
       
       // Configure ML settings
       const mlConfig: PredictionConfig = {
@@ -285,11 +310,13 @@ program
   .option('--ml-enhanced', 'Use machine learning enhanced analysis', false)
   .option('--ml-confidence <threshold>', 'ML confidence threshold (0.1-1.0)', parseFloat, 0.7)
   .option('--output <format>', 'Output format: table, json, markdown', 'table')
-  .action(async (organization, options) => {
+  .action(async (organization, options, command) => {
     const spinner = ora(`🏢 Scanning ${organization} repositories...`).start();
     
     try {
-      const kraven = new KravenHunter();
+      // Create GitHub auth configuration from global options
+      const authConfig = createGitHubAuthFromOptions(command.parent?.opts() || {});
+      const kraven = new KravenHunter(authConfig);
       const githubService = kraven.githubService;
       const analyzer = new (await import('./services/analyzer')).RepositoryAnalyzer(githubService);
       const orgScanner = new OrganizationScanner(githubService, analyzer);
@@ -479,9 +506,11 @@ program
 program
   .command('rate-limit')
   .description('Check GitHub API rate limit status')
-  .action(async () => {
+  .action(async (options, command) => {
     try {
-      const kraven = new KravenHunter();
+      // Create GitHub auth configuration from global options
+      const authConfig = createGitHubAuthFromOptions(command.parent?.opts() || {});
+      const kraven = new KravenHunter(authConfig);
       const rateLimit = await kraven.checkRateLimit();
       
       console.log(chalk.blue('📊 GitHub API Rate Limit Status:'));

@@ -1,6 +1,18 @@
-# 🔑 GitHub Token Setup for Kraven
+# 🔑 GitHub Authentication Setup for Kraven
 
-## Quick Setup Steps
+Kraven supports both **Personal Access Tokens (PAT)** and **OAuth tokens** for GitHub authentication.
+
+## Authentication Methods
+
+### 🔹 Personal Access Token (Recommended for Individual Use)
+Best for personal projects and individual developers.
+
+### 🔹 OAuth Token (Recommended for Enterprise/Apps)
+Best for GitHub Apps, enterprise environments, and OAuth-based workflows.
+
+---
+
+## Method 1: Personal Access Token Setup
 
 ### 1. Create GitHub Personal Access Token
 
@@ -107,4 +119,138 @@ kraven scan-multi "org1,org2,org3" --include-private
 
 **Note**: Private repository access only works for repositories you have access to (owned by you or organizations you're a member of).
 
-Once set up, you can run unlimited searches and analyses with Kraven! 🕷️
+---
+
+## Method 2: OAuth Token Setup
+
+### When to Use OAuth Tokens
+
+- **GitHub Apps**: Your application uses GitHub App authentication
+- **Enterprise Environments**: Your organization uses OAuth-based authentication
+- **CI/CD Pipelines**: Automated workflows with OAuth token management
+- **Third-party Integration**: Integration with OAuth-based systems
+
+### 1. Environment Variable Setup
+
+#### Option A: Dedicated OAuth Token Variable
+```bash
+# Create or update your .env file
+echo "GITHUB_OAUTH_TOKEN=your_oauth_token_here" >> .env
+```
+
+#### Option B: Generic Token with Type Specification
+```bash
+# Create or update your .env file
+echo "GITHUB_TOKEN=your_oauth_token_here" >> .env
+echo "GITHUB_TOKEN_TYPE=oauth" >> .env
+```
+
+### 2. Command Line Usage
+
+#### Using OAuth Token via CLI
+```bash
+# Method 1: Specify OAuth token directly
+kraven hunt --oauth-token "your_oauth_token_here" --language typescript
+
+# Method 2: Specify token with type
+kraven hunt --token "your_oauth_token_here" --token-type oauth --language typescript
+
+# Method 3: Use environment variables (no CLI flags needed)
+export GITHUB_OAUTH_TOKEN="your_oauth_token_here"
+kraven hunt --language typescript
+```
+
+### 3. OAuth Token Examples
+
+#### Hunt with OAuth Token
+```bash
+# Search using OAuth authentication
+kraven hunt --oauth-token "gho_xxxxxxxxxxxxxxxxxxxx" --language javascript --include-private
+
+# Organization scan with OAuth
+kraven scan myorg --oauth-token "your_oauth_token" --include-private --max-repos 30
+```
+
+#### Rate Limit Check with OAuth
+```bash
+# Verify OAuth token is working
+kraven rate-limit --oauth-token "your_oauth_token"
+```
+
+### 4. OAuth Token Auto-Detection
+
+Kraven automatically detects OAuth tokens based on:
+- **Token prefix**: Tokens starting with `gho_` are treated as OAuth
+- **Token length**: Very long tokens (>100 characters) are treated as OAuth
+- **Explicit type**: When `GITHUB_TOKEN_TYPE=oauth` is set
+
+### 5. GitHub App Integration
+
+For GitHub Apps, you can use installation access tokens:
+
+```bash
+# Example with GitHub App installation token
+export GITHUB_OAUTH_TOKEN="ghs_xxxxxxxxxxxxxxxxxxxx"
+kraven scan organization --include-private
+```
+
+---
+
+## Authentication Comparison
+
+| Feature | Personal Access Token | OAuth Token |
+|---------|----------------------|-------------|
+| **Setup Complexity** | Simple | Moderate |
+| **Best For** | Individual developers | Apps & Enterprise |
+| **Token Format** | `ghp_*`, `ghs_*`, `ghr_*` | `gho_*`, JWT-style |
+| **Expiration** | User-defined | App-managed |
+| **Rate Limits** | 5,000/hour | 5,000/hour |
+| **Private Repos** | ✅ With `repo` scope | ✅ With appropriate permissions |
+| **GitHub Apps** | ❌ Not applicable | ✅ Full support |
+
+---
+
+## Environment Variable Priority
+
+Kraven checks for authentication in this order:
+
+1. **Command-line options** (`--oauth-token`, `--token`)
+2. **GITHUB_OAUTH_TOKEN** environment variable
+3. **GITHUB_TOKEN** with `GITHUB_TOKEN_TYPE=oauth`
+4. **GITHUB_TOKEN** (treated as PAT)
+
+---
+
+## Troubleshooting OAuth Tokens
+
+### OAuth Token Not Working?
+1. **Check token format**: OAuth tokens usually start with `gho_` or are very long
+2. **Verify permissions**: Ensure the OAuth token has required scopes
+3. **Test authentication**: Run `kraven rate-limit --oauth-token "your_token"`
+4. **Check expiration**: OAuth tokens may expire based on app configuration
+
+### Common OAuth Issues
+```bash
+# Issue: Token treated as PAT instead of OAuth
+# Solution: Explicitly specify token type
+kraven hunt --token "your_token" --token-type oauth
+
+# Issue: Permission denied for private repos
+# Solution: Verify OAuth app has proper permissions
+kraven hunt --oauth-token "your_token" --include-private
+
+# Issue: Rate limiting problems
+# Solution: Check token is properly authenticated
+kraven rate-limit --oauth-token "your_token"
+```
+
+### GitHub App Token Example
+```bash
+# For GitHub App installation tokens
+export GITHUB_OAUTH_TOKEN="v1.1f699f..."  # Installation access token
+kraven scan myorg --include-private --max-repos 50
+```
+
+---
+
+Once set up, you can run unlimited searches and analyses with Kraven using either authentication method! 🕷️

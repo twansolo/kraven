@@ -1,4 +1,4 @@
-import { GitHubService } from './services/github';
+import { GitHubService, GitHubAuthConfig } from './services/github';
 import { RepositoryAnalyzer } from './services/analyzer';
 import { MLPredictor, EnhancedRepositoryAnalysis, PredictionConfig } from './services/ml-predictor';
 import { SearchFilters, HuntResults, RepositoryAnalysis } from './types';
@@ -32,10 +32,43 @@ export class KravenHunter {
   private analyzer: RepositoryAnalyzer;
   private mlPredictor: MLPredictor;
 
-  constructor(githubToken?: string) {
-    this.githubService = new GitHubService(githubToken || process.env.GITHUB_TOKEN);
+  constructor(authConfig?: string | GitHubAuthConfig) {
+    // Create GitHub service with enhanced auth support
+    const githubAuth = this.createGitHubAuth(authConfig);
+    this.githubService = new GitHubService(githubAuth);
     this.analyzer = new RepositoryAnalyzer(this.githubService);
     this.mlPredictor = new MLPredictor();
+  }
+
+  /**
+   * Create GitHub authentication configuration from various sources
+   */
+  private createGitHubAuth(authConfig?: string | GitHubAuthConfig): GitHubAuthConfig {
+    // If explicit config provided, use it
+    if (typeof authConfig === 'object') {
+      return authConfig;
+    }
+    
+    // If string token provided, use it as PAT
+    if (typeof authConfig === 'string') {
+      return { token: authConfig, tokenType: 'pat' };
+    }
+    
+    // Try to load from environment variables
+    const envToken = process.env.GITHUB_TOKEN;
+    const envOAuthToken = process.env.GITHUB_OAUTH_TOKEN;
+    const envTokenType = process.env.GITHUB_TOKEN_TYPE as 'pat' | 'oauth';
+    
+    if (envOAuthToken) {
+      return { oauthToken: envOAuthToken, tokenType: 'oauth' };
+    }
+    
+    if (envToken) {
+      return { token: envToken, tokenType: envTokenType || 'pat' };
+    }
+    
+    // No authentication available
+    return {};
   }
 
   /**

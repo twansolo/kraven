@@ -1,19 +1,74 @@
 import axios, { AxiosInstance } from 'axios';
 import { GitHubRepository, GitHubSearchResponse, SearchFilters } from '../types';
 
+export interface GitHubAuthConfig {
+  token?: string;
+  oauthToken?: string;
+  tokenType?: 'pat' | 'oauth';
+}
+
 export class GitHubService {
   public api: AxiosInstance; // Make public for organization scanner
   private readonly baseURL = 'https://api.github.com';
+  private authConfig: GitHubAuthConfig;
 
-  constructor(token?: string) {
+  constructor(tokenOrConfig?: string | GitHubAuthConfig) {
+    // Handle both legacy string token and new config object
+    if (typeof tokenOrConfig === 'string') {
+      // Don't assume PAT - let auto-detection work
+      this.authConfig = { token: tokenOrConfig };
+    } else {
+      this.authConfig = tokenOrConfig || {};
+    }
+
+    // Determine the authorization header
+    const authHeader = this.buildAuthHeader();
+
     this.api = axios.create({
       baseURL: this.baseURL,
       headers: {
         'Accept': 'application/vnd.github.v3+json',
         'User-Agent': 'Kraven-Hunter/1.0.0',
-        ...(token && { 'Authorization': `token ${token}` })
+        ...authHeader
       }
     });
+  }
+
+  /**
+   * Build the appropriate authorization header based on token type
+   */
+  private buildAuthHeader(): Record<string, string> {
+    const { token, oauthToken, tokenType } = this.authConfig;
+    
+    if (oauthToken) {
+      return { 'Authorization': `Bearer ${oauthToken}` };
+    }
+    
+    if (token) {
+      // Auto-detect token type if not specified
+      const detectedType = tokenType || this.detectTokenType(token);
+      
+      if (detectedType === 'oauth') {
+        return { 'Authorization': `Bearer ${token}` };
+      } else {
+        return { 'Authorization': `token ${token}` };
+      }
+    }
+    
+    return {};
+  }
+
+  /**
+   * Auto-detect token type based on token format
+   */
+  private detectTokenType(token: string): 'pat' | 'oauth' {
+    // GitHub OAuth tokens typically start with 'gho_' or are longer JWT-style tokens
+    // GitHub App installation tokens start with 'ghs_' and should use Bearer
+    // Personal Access Tokens typically start with 'ghp_', 'ghr_', etc.
+    if (token.startsWith('gho_') || token.startsWith('v1.') || token.length > 100) {
+      return 'oauth';
+    }
+    return 'pat';
   }
 
   /**

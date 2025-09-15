@@ -130,6 +130,13 @@ kraven scan netflix --languages javascript,typescript --max-repos 25
 
 **⚠️ Important**: Private repository scanning requires a GitHub token with `repo` scope instead of just `public_repo`.
 
+### Authentication Methods Supported
+
+Kraven supports both **Personal Access Tokens (PAT)** and **OAuth tokens**:
+
+- **Personal Access Token**: `--token` or `GITHUB_TOKEN` environment variable
+- **OAuth Token**: `--oauth-token` or `GITHUB_OAUTH_TOKEN` environment variable
+
 #### Update Your Token Scope
 1. Go to [GitHub Settings > Tokens](https://github.com/settings/tokens)
 2. Delete your existing "Kraven Hunter" token
@@ -303,6 +310,138 @@ kraven scan your-username --include-private --max-repos 25 --min-stars 0
 
 # Client project analysis
 kraven scan client-org --include-private --exclude-forks --max-repos 15
+```
+
+## OAuth Token Examples
+
+### Using OAuth Tokens with CLI
+
+#### Environment Variable Method
+```bash
+# Set OAuth token in environment
+export GITHUB_OAUTH_TOKEN="gho_xxxxxxxxxxxxxxxxxxxx"
+
+# Use all commands normally
+kraven hunt --language typescript --include-private
+kraven scan myorg --include-private --max-repos 20
+```
+
+#### Command Line Method
+```bash
+# Hunt with OAuth token
+kraven hunt --oauth-token "gho_xxxxxxxxxxxxxxxxxxxx" --language javascript --include-private
+
+# Organization scan with OAuth
+kraven scan myorg --oauth-token "your_oauth_token" --include-private --max-repos 30
+
+# Analysis with OAuth
+kraven analyze myorg/private-repo --oauth-token "your_oauth_token" --ml-enhanced
+```
+
+#### Mixed Token Types
+```bash
+# Explicitly specify OAuth token type
+kraven hunt --token "your_oauth_token" --token-type oauth --language python
+
+# Auto-detection (tokens starting with gho_ are detected as OAuth)
+kraven scan myorg --token "gho_xxxxxxxxxxxxxxxxxxxx" --include-private
+```
+
+### GitHub App Integration Examples
+
+#### GitHub App Installation Tokens
+```bash
+# Use GitHub App installation access token
+export GITHUB_OAUTH_TOKEN="v1.1f699f1a1e3ce4567890abcdef..."
+kraven scan organization --include-private --max-repos 100
+
+# Check rate limits with GitHub App token
+kraven rate-limit --oauth-token "v1.1f699f1a1e3ce4567890abcdef..."
+```
+
+#### Enterprise GitHub App Usage
+```bash
+# Enterprise organization scan with GitHub App
+kraven scan enterprise-org --oauth-token "ghs_xxxxxxxxxxxxxxxxxxxx" \
+  --include-private --max-repos 50 --languages java,python
+
+# Multi-organization enterprise scan
+kraven scan-multi "team-a,team-b,team-c" \
+  --oauth-token "your_github_app_token" --include-private
+```
+
+### CI/CD Pipeline Examples
+
+#### GitHub Actions with OAuth
+```bash
+# In GitHub Actions workflow
+export GITHUB_OAUTH_TOKEN="${{ secrets.GITHUB_TOKEN }}"
+kraven scan ${{ github.repository_owner }} --include-private --output json > tech-debt-report.json
+```
+
+#### Enterprise CI/CD
+```bash
+# Jenkins/GitLab CI with OAuth token
+kraven scan myorg --oauth-token "$OAUTH_TOKEN" \
+  --include-private --output markdown > reports/tech-debt-$(date +%Y%m%d).md
+
+# Automated compliance scanning
+kraven scan-multi "org1,org2,org3" --oauth-token "$ENTERPRISE_TOKEN" \
+  --include-private --min-stars 0 --output json > compliance-report.json
+```
+
+### OAuth Token Management
+
+#### Environment Configuration
+```bash
+# Method 1: Dedicated OAuth variable
+echo "GITHUB_OAUTH_TOKEN=gho_xxxxxxxxxxxxxxxxxxxx" >> .env
+
+# Method 2: Generic token with type specification
+echo "GITHUB_TOKEN=gho_xxxxxxxxxxxxxxxxxxxx" >> .env
+echo "GITHUB_TOKEN_TYPE=oauth" >> .env
+
+# Method 3: Mixed environment (PAT fallback)
+echo "GITHUB_OAUTH_TOKEN=gho_xxxxxxxxxxxxxxxxxxxx" >> .env
+echo "GITHUB_TOKEN=ghp_fallback_pat_token" >> .env
+```
+
+#### Token Verification
+```bash
+# Test OAuth token authentication
+kraven rate-limit --oauth-token "your_oauth_token"
+
+# Compare PAT vs OAuth rate limits
+kraven rate-limit --token "your_pat_token" --token-type pat
+kraven rate-limit --oauth-token "your_oauth_token"
+```
+
+### Advanced OAuth Use Cases
+
+#### GitHub App with Custom Permissions
+```bash
+# Scan with specific GitHub App permissions
+kraven hunt --oauth-token "ghs_installation_token" \
+  --language typescript --include-private --ml-enhanced
+
+# Organization-wide compliance audit
+kraven scan enterprise --oauth-token "ghs_compliance_token" \
+  --include-private --max-repos 200 --output markdown
+```
+
+#### OAuth Token Rotation
+```bash
+# Script for token rotation in enterprise environments
+OLD_TOKEN="$GITHUB_OAUTH_TOKEN"
+NEW_TOKEN="$(get_new_oauth_token)"
+
+# Test new token
+if kraven rate-limit --oauth-token "$NEW_TOKEN" >/dev/null 2>&1; then
+    export GITHUB_OAUTH_TOKEN="$NEW_TOKEN"
+    echo "Token rotated successfully"
+else
+    echo "New token validation failed, keeping old token"
+fi
 ```
 
 ## Utility Commands
