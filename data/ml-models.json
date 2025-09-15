@@ -109,8 +109,8 @@
       "accuracy": 0,
       "type": "logistic_regression"
     },
-    "trained_at": "2025-09-15T03:01:12.167Z",
-    "training_samples": 109
+    "trained_at": "2025-09-15T03:18:51.052Z",
+    "training_samples": 209
   },
   "revival_success": {
     "type": "revival_success",
@@ -222,8 +222,8 @@
       "accuracy": 0,
       "type": "linear_regression"
     },
-    "trained_at": "2025-09-15T03:01:12.176Z",
-    "training_samples": 109
+    "trained_at": "2025-09-15T03:18:51.067Z",
+    "training_samples": 209
   },
   "effort_estimation": {
     "type": "effort_estimation",
@@ -335,8 +335,8 @@
       "accuracy": 0,
       "type": "linear_regression"
     },
-    "trained_at": "2025-09-15T03:01:12.184Z",
-    "training_samples": 109
+    "trained_at": "2025-09-15T03:18:51.081Z",
+    "training_samples": 209
   },
   "community_adoption": {
     "type": "community_adoption",
@@ -448,7 +448,7 @@
       "accuracy": 0,
       "type": "linear_regression"
     },
-    "trained_at": "2025-09-15T03:01:12.190Z",
-    "training_samples": 109
+    "trained_at": "2025-09-15T03:18:51.091Z",
+    "training_samples": 209
   }
 }
