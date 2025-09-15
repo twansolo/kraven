@@ -74,6 +74,7 @@ export interface OrganizationScanResults {
     fair: number;
     poor: number;
     critical: number;
+    unknown: number;
   };
   languageBreakdown: { [language: string]: number };
   techDebtMetrics: TechDebtMetrics; // New tech debt analysis
@@ -169,6 +170,17 @@ export class OrganizationScanner {
     let page = 1;
     const perPage = 30; // Smaller page size for better rate limiting
     
+    // Determine repository type based on private access request
+    const repoType = filters.includePrivate ? 'all' : 'public';
+    
+    // Check if private access is requested and available
+    if (filters.includePrivate) {
+      const hasAccess = await this.githubService.hasPrivateAccess();
+      if (!hasAccess) {
+        throw new Error('Private repository access requires a GitHub token with "repo" scope. Current token only has "public_repo" scope.');
+      }
+    }
+    
     while (repositories.length < maxRepos) {
       try {
         let pageRepos: GitHubRepository[] = [];
@@ -181,7 +193,7 @@ export class OrganizationScanner {
               per_page: perPage,
               sort: filters.sortBy || 'updated',
               direction: filters.order || 'desc',
-              type: 'public' // Explicitly request public repos
+              type: repoType // Use 'all' for private repos, 'public' for public only
             }
           });
           pageRepos = orgResponse.data;
@@ -194,7 +206,7 @@ export class OrganizationScanner {
                 per_page: perPage,
                 sort: filters.sortBy || 'updated',
                 direction: filters.order || 'desc',
-                type: 'public' // Explicitly request public repos
+                type: repoType // Use 'all' for private repos, 'public' for public only
               }
             });
             pageRepos = userResponse.data;
@@ -345,7 +357,8 @@ export class OrganizationScanner {
       good: 0,
       fair: 0,
       poor: 0,
-      critical: 0
+      critical: 0,
+      unknown: 0
     };
     
     analyses.forEach(analysis => {
@@ -355,6 +368,7 @@ export class OrganizationScanner {
         case 'fair': healthSummary.fair++; break;
         case 'poor': healthSummary.poor++; break;
         case 'critical': healthSummary.critical++; break;
+        case 'unknown': healthSummary.unknown++; break;
       }
     });
     
@@ -397,7 +411,7 @@ export class OrganizationScanner {
   private calculateTechDebtMetrics(
     analyses: (RepositoryAnalysis | EnhancedRepositoryAnalysis)[],
     abandonedProjects: (RepositoryAnalysis | EnhancedRepositoryAnalysis)[],
-    healthSummary: { excellent: number; good: number; fair: number; poor: number; critical: number }
+    healthSummary: { excellent: number; good: number; fair: number; poor: number; critical: number; unknown: number }
   ): TechDebtMetrics {
     
     // Base hourly rates for calculations (industry averages)
@@ -414,22 +428,25 @@ export class OrganizationScanner {
     const criticalRepos = healthSummary.critical;
     const poorRepos = healthSummary.poor;
     const fairRepos = healthSummary.fair;
+    const unknownRepos = healthSummary.unknown;
     
     // Hours estimation based on repository health and complexity
     const criticalIssueHours = criticalRepos * 16; // 2 days per critical repo
     const dependencyUpdateHours = (poorRepos * 8) + (fairRepos * 4); // 1 day poor, half day fair
+    const unknownRepoHours = unknownRepos * 4; // Half day to analyze unknown repos
     const abandonedProjectHours = abandonedProjects.length * 12; // 1.5 days per abandoned project
-    const totalMaintenanceHours = criticalIssueHours + dependencyUpdateHours + abandonedProjectHours;
-    const averageHoursPerRepo = totalMaintenanceHours / analyses.length;
+    const totalMaintenanceHours = criticalIssueHours + dependencyUpdateHours + unknownRepoHours + abandonedProjectHours;
+    const averageHoursPerRepo = analyses.length > 0 ? totalMaintenanceHours / analyses.length : 0;
     
     // Cost Calculations
     const criticalSecurityCost = criticalRepos * SECURITY_SPECIALIST_RATE * 16;
     const dependencyUpdateCost = dependencyUpdateHours * DEVELOPER_HOURLY_RATE;
+    const unknownRepoCost = unknownRepoHours * DEVELOPER_HOURLY_RATE;
     const abandonedProjectCost = abandonedProjectHours * DEVELOPER_HOURLY_RATE;
     
-    const monthlyMaintenanceCost = (poorRepos * 200) + (fairRepos * 100) + (criticalRepos * 500);
+    const monthlyMaintenanceCost = (poorRepos * 200) + (fairRepos * 100) + (criticalRepos * 500) + (unknownRepos * 50);
     const estimatedAnnualCost = monthlyMaintenanceCost * 12;
-    const maintenanceCostPerRepo = monthlyMaintenanceCost / analyses.length;
+    const maintenanceCostPerRepo = analyses.length > 0 ? monthlyMaintenanceCost / analyses.length : 0;
     
     // Security incident cost estimation (based on industry data)
     const baseIncidentCost = 50000; // Base cost of security incident
@@ -437,33 +454,41 @@ export class OrganizationScanner {
     const securityIncidentCost = criticalRepos * baseIncidentCost * reputationMultiplier;
     
     // Opportunity cost (lost productivity)
-    const productivityLossPercentage = Math.min(50, (poorRepos + criticalRepos) / analyses.length * 100);
+    const productivityLossPercentage = analyses.length > 0 ? Math.min(50, (poorRepos + criticalRepos + unknownRepos * 0.3) / analyses.length * 100) : 0;
     const opportunityCost = (analyses.length * DEVELOPER_HOURLY_RATE * 40 * 52) * (productivityLossPercentage / 100);
     
     // Security Risk Assessment
     const criticalVulnerabilities = criticalRepos * 2.5; // Estimate 2.5 critical CVEs per critical repo
     const highVulnerabilities = (poorRepos + criticalRepos) * 1.8; // High severity issues
-    const outdatedDependencies = (poorRepos * 15) + (fairRepos * 8) + (criticalRepos * 25);
+    const outdatedDependencies = (poorRepos * 15) + (fairRepos * 8) + (criticalRepos * 25) + (unknownRepos * 5);
     
     // Risk score calculation (0-100)
-    const securityRiskScore = Math.min(100, 
+    const securityRiskScore = analyses.length > 0 ? Math.min(100, 
       (criticalRepos / analyses.length * 40) + 
       (poorRepos / analyses.length * 25) + 
+      (unknownRepos / analyses.length * 15) + // Unknown repos carry some risk
       (abandonedProjects.length / analyses.length * 35)
-    );
+    ) : 0;
     
     // Compliance risk assessment
     let complianceRisk: 'low' | 'medium' | 'high' | 'critical';
-    if (criticalRepos > analyses.length * 0.3) complianceRisk = 'critical';
-    else if (criticalRepos > analyses.length * 0.15) complianceRisk = 'high';
-    else if (poorRepos > analyses.length * 0.4) complianceRisk = 'medium';
-    else complianceRisk = 'low';
+    if (analyses.length === 0) {
+      complianceRisk = 'low';
+    } else if (criticalRepos > analyses.length * 0.3) {
+      complianceRisk = 'critical';
+    } else if (criticalRepos > analyses.length * 0.15) {
+      complianceRisk = 'high';
+    } else if (poorRepos > analyses.length * 0.4 || unknownRepos > analyses.length * 0.6) {
+      complianceRisk = 'medium';
+    } else {
+      complianceRisk = 'low';
+    }
     
     // Business Impact Calculations
-    const productivityLoss = Math.min(50, (abandonedProjects.length / analyses.length) * 100);
+    const productivityLoss = analyses.length > 0 ? Math.min(50, (abandonedProjects.length / analyses.length) * 100) : 0;
     const deploymentRisk = Math.min(100, securityRiskScore * 0.8);
     const talentRetention = Math.max(0, 100 - (productivityLoss * 1.5)); // Higher tech debt = lower satisfaction
-    const innovationDelay = Math.ceil((abandonedProjects.length / analyses.length) * 12); // Months
+    const innovationDelay = analyses.length > 0 ? Math.ceil((abandonedProjects.length / analyses.length) * 12) : 0; // Months
     
     return {
       totalCostImpact: {

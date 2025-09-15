@@ -26,7 +26,7 @@ export interface DependencyAnalysis {
   outdatedDependencies: number;
   vulnerableDependencies: number;
   criticalVulnerabilities: number;
-  dependencyHealth: 'excellent' | 'good' | 'fair' | 'poor' | 'critical';
+  dependencyHealth: 'excellent' | 'good' | 'fair' | 'poor' | 'critical' | 'unknown';
   healthScore: number; // 0-100
   dependencies: DependencyInfo[];
   recommendations: string[];
@@ -420,8 +420,8 @@ export class DependencyAnalyzer {
       outdatedDependencies: 0,
       vulnerableDependencies: 0,
       criticalVulnerabilities: 0,
-      dependencyHealth: 'excellent',
-      healthScore: 100,
+      dependencyHealth: 'unknown',
+      healthScore: 0,
       dependencies: [],
       recommendations: [reason],
       lastUpdated: new Date()

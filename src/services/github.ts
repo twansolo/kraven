@@ -130,6 +130,11 @@ export class GitHubService {
       queryParts.push(`archived:${filters.archived}`);
     }
 
+    // Private repository filter - only works if authenticated
+    if (filters.includePrivate) {
+      queryParts.push(`is:private`);
+    }
+
     // Category-based keywords
     if (filters.category) {
       const categoryKeywords = this.getCategoryKeywords(filters.category);
@@ -155,6 +160,68 @@ export class GitHubService {
     };
 
     return keywords[category] || [];
+  }
+
+  /**
+   * Get authenticated user's repositories (includes private repos)
+   */
+  async getUserRepositories(
+    visibility: 'all' | 'public' | 'private' = 'all',
+    page = 1,
+    perPage = 30
+  ): Promise<GitHubRepository[]> {
+    try {
+      const response = await this.api.get('/user/repos', {
+        params: {
+          visibility,
+          page,
+          per_page: perPage,
+          sort: 'updated',
+          direction: 'desc'
+        }
+      });
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new Error(`Failed to fetch user repositories: ${error.response?.data?.message || error.message}`);
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Check if the current token has access to private repositories
+   */
+  async hasPrivateAccess(): Promise<boolean> {
+    try {
+      // Try to access user's private repos endpoint
+      await this.api.get('/user/repos', {
+        params: { visibility: 'private', per_page: 1 }
+      });
+      return true;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        return false;
+      }
+      // If it's another error, assume we have access but there might be other issues
+      return true;
+    }
+  }
+
+  /**
+   * Enhanced search that can include private repositories
+   */
+  async searchRepositoriesEnhanced(filters: SearchFilters, page = 1, perPage = 30): Promise<GitHubSearchResponse> {
+    // If includePrivate is requested, check if we have access
+    if (filters.includePrivate) {
+      const hasAccess = await this.hasPrivateAccess();
+      if (!hasAccess) {
+        throw new Error('Private repository access requires a GitHub token with "repo" scope. Current token only has "public_repo" scope.');
+      }
+    }
+
+    // Use the regular search for now - GitHub search API will include private repos if token has proper scope
+    return this.searchRepositories(filters, page, perPage);
   }
 
   /**

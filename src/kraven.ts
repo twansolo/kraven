@@ -49,8 +49,8 @@ export class KravenHunter {
   ): Promise<HuntResults> {
     const startTime = Date.now();
     
-    // Search repositories
-    const searchResponse = await this.githubService.searchRepositories(filters, 1, Math.min(maxResults * 2, 100));
+    // Search repositories (use enhanced search for private repo support)
+    const searchResponse = await this.githubService.searchRepositoriesEnhanced(filters, 1, Math.min(maxResults * 2, 100));
     
     // Analyze repositories (limit to maxResults)
     const repositoriesToAnalyze = searchResponse.items.slice(0, maxResults);

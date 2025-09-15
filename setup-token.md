@@ -8,7 +8,9 @@
 2. **Click "Generate new token"** → **"Generate new token (classic)"**
 3. **Token Name**: `Kraven Hunter` (or any name you prefer)
 4. **Expiration**: Select `90 days` (recommended)
-5. **Scopes**: Check `public_repo` (allows access to public repositories)
+5. **Scopes**: Choose based on your needs:
+   - **For public repositories only**: Check `public_repo`
+   - **For private repositories**: Check `repo` (full repository access)
 6. **Click "Generate token"**
 7. **Copy the token** (you won't be able to see it again!)
 
@@ -46,19 +48,21 @@ Remaining: X/60
 
 ## Benefits of Using a Token
 
-| Feature | Without Token | With Token |
-|---------|---------------|------------|
-| **Rate Limit** | 60 requests/hour | 5,000 requests/hour |
-| **Search Results** | Limited | Full access |
-| **Reliability** | May hit limits quickly | Stable for heavy usage |
-| **Private Repos** | No access | Access to your private repos |
+| Feature | Without Token | With `public_repo` | With `repo` |
+|---------|---------------|-------------------|-------------|
+| **Rate Limit** | 60 requests/hour | 5,000 requests/hour | 5,000 requests/hour |
+| **Search Results** | Limited | Full public access | Full access |
+| **Reliability** | May hit limits quickly | Stable for heavy usage | Stable for heavy usage |
+| **Private Repos** | No access | No access | ✅ Full access |
+| **Organization Private Repos** | No access | No access | ✅ Full access |
 
 ## Security Notes
 
 - ✅ The `.env` file is automatically ignored by git (won't be committed)
-- ✅ Only requires `public_repo` scope (minimal permissions)
+- ✅ Use minimal required permissions (`public_repo` for public repos, `repo` for private)
 - ✅ Token can be revoked anytime at https://github.com/settings/tokens
 - ⚠️ Never share your token or commit it to version control
+- ⚠️ `repo` scope grants full repository access - use only when needed for private repos
 
 ## Troubleshooting
 
@@ -66,7 +70,9 @@ Remaining: X/60
 1. Check the `.env` file is in the correct directory (`kraven/.env`)
 2. Ensure no spaces around the `=` sign
 3. Verify the token hasn't expired
-4. Make sure you selected the `public_repo` scope
+4. Make sure you selected the correct scope:
+   - `public_repo` for public repositories
+   - `repo` for private repository access
 
 ### Still Getting Rate Limited?
 1. Check if the token is being loaded: `npm run dev -- rate-limit`
@@ -79,5 +85,26 @@ Remaining: X/60
 # GitHub Personal Access Token for Kraven
 GITHUB_TOKEN=ghp_1234567890abcdef1234567890abcdef12345678
 ```
+
+## Using Private Repository Features
+
+Once you have a token with `repo` scope, you can scan private repositories:
+
+### Hunt Private Repositories
+```bash
+kraven hunt --language typescript --include-private
+```
+
+### Scan Organization Private Repositories
+```bash
+kraven scan your-org --include-private --max-repos 20
+```
+
+### Scan Multiple Organizations (including private repos)
+```bash
+kraven scan-multi "org1,org2,org3" --include-private
+```
+
+**Note**: Private repository access only works for repositories you have access to (owned by you or organizations you're a member of).
 
 Once set up, you can run unlimited searches and analyses with Kraven! 🕷️

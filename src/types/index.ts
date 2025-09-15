@@ -57,6 +57,7 @@ export interface SearchFilters {
   pushedAfter?: string; // ISO date
   hasIssues?: boolean;
   archived?: boolean;
+  includePrivate?: boolean; // Include private repositories (requires appropriate token scope)
   sort?: 'stars' | 'updated' | 'created';
   order?: 'asc' | 'desc';
 }
@@ -105,7 +106,7 @@ export interface DependencyAnalysis {
   outdatedDependencies: number;
   vulnerableDependencies: number;
   criticalVulnerabilities: number;
-  dependencyHealth: 'excellent' | 'good' | 'fair' | 'poor' | 'critical';
+  dependencyHealth: 'excellent' | 'good' | 'fair' | 'poor' | 'critical' | 'unknown';
   healthScore: number; // 0-100
   dependencies: DependencyInfo[];
   recommendations: string[];

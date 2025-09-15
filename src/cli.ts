@@ -73,6 +73,7 @@ program
   .option('--skip-dependencies', 'Skip dependency analysis (faster but less detailed)', false)
   .option('--ml-enhanced', 'Use machine learning enhanced scoring (requires trained models)', false)
   .option('--ml-confidence <threshold>', 'ML confidence threshold (0.1-1.0)', parseFloat, 0.7)
+  .option('--include-private', 'Include private repositories (requires repo scope token)', false)
   .action(async (options) => {
     // Only show spinner for non-JSON output to keep JSON clean
     const spinner = options.output === 'json' ? null : ora('🕷️ Kraven is hunting...').start();
@@ -85,6 +86,7 @@ program
         maxStars: options.maxStars,
         pushedBefore: options.pushedBefore,
         pushedAfter: options.pushedAfter,
+        includePrivate: options.includePrivate,
         sort: options.sort,
         order: options.order
       };
@@ -279,6 +281,7 @@ program
   .option('--exclude-archived', 'Exclude archived repositories', false)
   .option('--pushed-before <date>', 'Only repos last updated before date (YYYY-MM-DD)')
   .option('--pushed-after <date>', 'Only repos last updated after date (YYYY-MM-DD)')
+  .option('--include-private', 'Include private repositories (requires repo scope token)', false)
   .option('--ml-enhanced', 'Use machine learning enhanced analysis', false)
   .option('--ml-confidence <threshold>', 'ML confidence threshold (0.1-1.0)', parseFloat, 0.7)
   .option('--output <format>', 'Output format: table, json, markdown', 'table')
@@ -305,6 +308,7 @@ program
         excludeArchived: options.excludeArchived,
         pushedBefore: options.pushedBefore,
         pushedAfter: options.pushedAfter,
+        includePrivate: options.includePrivate,
         sortBy: 'updated' as const,
         order: 'desc' as const
       };
@@ -350,6 +354,7 @@ program
   .option('--min-stars <number>', 'Minimum stars to consider', (value) => parseInt(value, 10), 10)
   .option('--exclude-forks', 'Exclude forked repositories', false)
   .option('--exclude-archived', 'Exclude archived repositories', false)
+  .option('--include-private', 'Include private repositories (requires repo scope token)', false)
   .option('--output <format>', 'Output format: table, json, markdown', 'table')
   .action(async (organizations, options) => {
     const orgList = organizations.split(',').map((org: string) => org.trim());
@@ -365,6 +370,7 @@ program
         minStars: options.minStars,
         excludeForks: options.excludeForks,
         excludeArchived: options.excludeArchived,
+        includePrivate: options.includePrivate,
         sortBy: 'updated' as const,
         order: 'desc' as const
       };
@@ -966,7 +972,8 @@ function printTableOrganizationResults(results: any) {
   console.log(`👍 Good: ${healthSummary.good}`);
   console.log(`⚠️ Fair: ${healthSummary.fair}`);
   console.log(`👎 Poor: ${healthSummary.poor}`);
-  console.log(`🚨 Critical: ${healthSummary.critical}\n`);
+  console.log(`🚨 Critical: ${healthSummary.critical}`);
+  console.log(`❓ Unknown: ${healthSummary.unknown}\n`);
 
   // Tech Debt Impact Analysis
   if (techDebtMetrics) {
