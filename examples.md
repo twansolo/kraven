@@ -124,6 +124,187 @@ kraven scan-multi microsoft,google,facebook --max-repos 15
 kraven scan netflix --languages javascript,typescript --max-repos 25
 ```
 
+## Private Repository Scanning
+
+### Prerequisites for Private Repository Access
+
+**⚠️ Important**: Private repository scanning requires a GitHub token with `repo` scope instead of just `public_repo`.
+
+#### Update Your Token Scope
+1. Go to [GitHub Settings > Tokens](https://github.com/settings/tokens)
+2. Delete your existing "Kraven Hunter" token
+3. Create a new token with **`repo`** scope (full repository access)
+4. Update your `.env` file with the new token
+
+#### Verify Private Access
+```bash
+# Check if your token has the right permissions
+kraven rate-limit
+
+# Test private repository access
+kraven hunt --language javascript --include-private --limit 1
+```
+
+### Private Repository Hunt Commands
+
+#### Hunt Private Repositories by Language
+```bash
+# Search your private TypeScript repositories
+kraven hunt --language typescript --include-private --min-stars 1
+
+# Find abandoned private JavaScript projects
+kraven hunt --language javascript --include-private --pushed-before 2022-01-01
+```
+
+#### Hunt Private Projects by Category
+```bash
+# Find private CLI tools
+kraven hunt --category cli-tool --include-private --limit 5
+
+# Search private development tools
+kraven hunt --category dev-tool --include-private --min-stars 0
+```
+
+#### Advanced Private Repository Searches
+```bash
+# Find recently abandoned private projects
+kraven hunt --include-private --pushed-before 2023-06-01 --min-stars 0 --limit 10
+
+# Search private repos with specific star range
+kraven hunt --include-private --min-stars 1 --max-stars 50 --language python
+```
+
+### Private Organization Scanning
+
+#### Scan Your Organization's Private Repositories
+```bash
+# Comprehensive private repo scan
+kraven scan your-org --include-private --max-repos 20
+
+# Focus on private repos with tech debt analysis
+kraven scan your-company --include-private --max-repos 30 --min-stars 0
+```
+
+#### Private Repository Tech Debt Analysis
+```bash
+# Get detailed tech debt metrics for private repos
+kraven scan your-org --include-private --output markdown > private-tech-debt-report.md
+
+# Focus on high-risk private repositories
+kraven scan your-org --include-private --pushed-before 2022-01-01 --max-repos 25
+```
+
+#### Multi-Organization Private Scanning
+```bash
+# Scan multiple organizations including private repos
+kraven scan-multi "org1,org2,personal-account" --include-private --max-repos 15
+
+# Compare private repo health across organizations
+kraven scan-multi "company-a,company-b" --include-private --min-stars 0
+```
+
+### Private Repository Analysis
+
+#### Analyze Specific Private Repositories
+```bash
+# Deep analysis of private repository
+kraven analyze your-org/private-repo --ml-enhanced
+
+# Generate private repo report
+kraven analyze your-company/internal-tool --output markdown > private-analysis.md
+```
+
+#### Private Fork Analysis
+```bash
+# Analyze forks of private repository (if accessible)
+kraven forks your-org/private-project --max-forks 10 --min-stars 0
+```
+
+### Private Repository Examples by Use Case
+
+#### Internal Tool Maintenance
+```bash
+# Find abandoned internal tools
+kraven scan your-org --include-private --category cli-tool --pushed-before 2022-01-01
+
+# Assess internal development tools
+kraven scan your-org --include-private --category dev-tool --max-repos 20
+```
+
+#### Security and Compliance Auditing
+```bash
+# Security-focused private repo scan
+kraven scan your-org --include-private --output json > security-audit.json
+
+# Compliance risk assessment
+kraven scan your-org --include-private --max-repos 50 --output markdown
+```
+
+#### Team Productivity Analysis
+```bash
+# Analyze team repositories for tech debt
+kraven scan your-team --include-private --languages javascript,typescript --max-repos 15
+
+# Get productivity impact metrics
+kraven scan your-org --include-private --min-stars 0 --exclude-forks
+```
+
+### Private Repository Best Practices
+
+#### Planning Repository Revival
+```bash
+# Identify prime candidates for internal revival
+kraven hunt --include-private --ml-enhanced --ml-confidence 0.7 --limit 10
+
+# Focus on high-value private projects
+kraven hunt --include-private --min-stars 5 --pushed-before 2023-01-01
+```
+
+#### Resource Planning
+```bash
+# Get time estimates for private repo maintenance
+kraven scan your-org --include-private --max-repos 30 --output table
+
+# Cost analysis for private repository maintenance
+kraven scan your-org --include-private --output markdown > cost-analysis.md
+```
+
+### Security Notes for Private Repository Scanning
+
+- **Token Security**: The `repo` scope grants full access to all your repositories
+- **Access Scope**: Only scans private repositories you have access to
+- **Rate Limits**: Same 5000 requests/hour limit applies
+- **Audit Trail**: GitHub logs all API access for security monitoring
+
+### Common Private Repository Scenarios
+
+#### Startup/Small Company
+```bash
+# Scan all company repositories
+kraven scan startup-company --include-private --max-repos 50 --min-stars 0
+
+# Focus on critical internal tools
+kraven scan startup-company --include-private --category cli-tool
+```
+
+#### Enterprise Organization
+```bash
+# Department-level analysis
+kraven scan enterprise-dept --include-private --max-repos 100 --languages java,python
+
+# Cross-team comparison
+kraven scan-multi "team-a,team-b,team-c" --include-private --max-repos 20
+```
+
+#### Personal/Freelance Projects
+```bash
+# Personal project maintenance planning
+kraven scan your-username --include-private --max-repos 25 --min-stars 0
+
+# Client project analysis
+kraven scan client-org --include-private --exclude-forks --max-repos 15
+```
+
 ## Utility Commands
 
 ### Check API rate limits
