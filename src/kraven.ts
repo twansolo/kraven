@@ -27,7 +27,7 @@ function loadEnvironmentVariables() {
 loadEnvironmentVariables();
 
 export class KravenHunter {
-  private githubService: GitHubService;
+  public githubService: GitHubService; // Make public for fork analyzer access
   private analyzer: RepositoryAnalyzer;
 
   constructor(githubToken?: string) {

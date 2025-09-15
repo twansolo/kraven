@@ -112,6 +112,41 @@ export interface DependencyAnalysis {
   lastUpdated?: Date;
 }
 
+// Fork analysis types
+export interface ForkInfo {
+  repository: GitHubRepository;
+  analysis: RepositoryAnalysis;
+  activityScore: number; // 0-100
+  divergenceFromOriginal: number; // commits ahead
+  lastActivityDays: number;
+  hasRecentCommits: boolean;
+  hasRecentReleases: boolean;
+  maintainerResponsiveness: number; // 0-100
+  forkRank: number; // 1-based ranking
+}
+
+export interface ForkComparison {
+  original: GitHubRepository;
+  totalForks: number;
+  analyzedForks: number;
+  activeForks: ForkInfo[];
+  topRecommendations: ForkInfo[];
+  insights: string[];
+  bestForRevival?: ForkInfo;
+  bestForContribution?: ForkInfo;
+  mostDiverged?: ForkInfo;
+  executionTime: number;
+  timestamp: string;
+}
+
+export interface ForkAnalysisOptions {
+  maxForks?: number; // Maximum forks to analyze (default: 20)
+  minStars?: number; // Minimum stars to consider (default: 1)
+  minActivity?: number; // Minimum days since last activity (default: 365)
+  includeOriginal?: boolean; // Include original repo in comparison (default: true)
+  sortBy?: 'activity' | 'stars' | 'divergence' | 'health';
+}
+
 export interface KravenConfig {
   githubToken?: string;
   defaultFilters: SearchFilters;
@@ -119,4 +154,5 @@ export interface KravenConfig {
   maxResults: number;
   analysisDepth: 'basic' | 'detailed' | 'comprehensive';
   dependencyAnalysis?: boolean;
+  forkAnalysis?: boolean;
 }

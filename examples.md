@@ -47,6 +47,24 @@ kraven analyze owner/repo --output markdown > analysis.md
 kraven hunt --language typescript --output json > results.json
 ```
 
+## Fork Analysis Commands
+
+### Analyze forks of abandoned repository
+```bash
+kraven forks bower/bower --max-forks 10 --min-stars 5
+```
+
+### Compare forks with different criteria
+```bash
+kraven forks angular/angular.js --max-forks 20 --sort activity
+kraven forks jquery/jquery-ui --sort health --output markdown
+```
+
+### Find most active fork
+```bash
+kraven forks facebook/create-react-app --sort stars --max-forks 15
+```
+
 ## Utility Commands
 
 ### Check API rate limits
@@ -97,3 +115,16 @@ kraven hunt --category build-tool --min-stars 200 --pushed-before 2023-01-01
 - **🎯 PRIME**: High abandonment + High revival potential
 - **⚠️ MAYBE**: Moderate scores, investigate further
 - **❌ SKIP**: Low revival potential or still active
+
+### Fork Analysis Results
+- **🌟 EXCELLENT**: Highly active fork with great potential
+- **🎯 GOOD**: Active fork worth considering
+- **⚠️ FAIR**: Moderate activity, may need investigation
+- **❌ POOR**: Low activity, probably not worth pursuing
+
+### Fork Health Indicators
+- **✅ Excellent**: All dependencies up-to-date and secure
+- **👍 Good**: Most dependencies current with minor issues
+- **⚠️ Fair**: Some outdated dependencies, manageable
+- **👎 Poor**: Many outdated dependencies
+- **🚨 Critical**: Security vulnerabilities present

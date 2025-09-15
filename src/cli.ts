@@ -7,7 +7,8 @@ import * as dotenv from 'dotenv';
 import * as path from 'path';
 import * as fs from 'fs';
 import { KravenHunter } from './kraven';
-import { SearchFilters, ProjectCategory } from './types';
+import { SearchFilters, ProjectCategory, ForkAnalysisOptions } from './types';
+import { ForkAnalyzer } from './services/fork-analyzer';
 
 // Load environment variables from multiple locations
 function loadEnvironmentVariables() {
@@ -132,6 +133,56 @@ program
     } catch (error) {
       spinner.stop();
       console.error(chalk.red('❌ Analysis failed:'), error instanceof Error ? error.message : error);
+      process.exit(1);
+    }
+  });
+
+// Fork analysis command
+program
+  .command('forks <repository>')
+  .description('Analyze forks of an abandoned repository (format: owner/repo)')
+  .option('--max-forks <number>', 'Maximum forks to analyze', parseInt, 20)
+  .option('--min-stars <number>', 'Minimum stars to consider', parseInt, 1)
+  .option('--min-activity <days>', 'Maximum days since last activity', parseInt, 365)
+  .option('--sort <field>', 'Sort by: activity, stars, divergence, health', 'activity')
+  .option('--output <format>', 'Output format: table, json, markdown', 'table')
+  .action(async (repository, options) => {
+    const spinner = options.output === 'json' ? null : ora(`🍴 Analyzing forks of ${repository}...`).start();
+    
+    try {
+      const [owner, repo] = repository.split('/');
+      
+      if (!owner || !repo) {
+        throw new Error('Repository must be in format "owner/repo"');
+      }
+
+      const kraven = new KravenHunter();
+      const githubService = (kraven as any).githubService; // Access private property
+      const forkAnalyzer = new ForkAnalyzer(githubService);
+      
+      const analysisOptions: ForkAnalysisOptions = {
+        maxForks: options.maxForks,
+        minStars: options.minStars,
+        minActivity: options.minActivity,
+        sortBy: options.sort,
+        includeOriginal: true
+      };
+      
+      const forkComparison = await forkAnalyzer.analyzeForks(owner, repo, analysisOptions);
+      
+      if (spinner) spinner.stop();
+      
+      if (options.output === 'json') {
+        console.log(JSON.stringify(forkComparison, null, 2));
+      } else if (options.output === 'markdown') {
+        printMarkdownForkAnalysis(forkComparison);
+      } else {
+        printTableForkAnalysis(forkComparison);
+      }
+      
+    } catch (error) {
+      if (spinner) spinner.stop();
+      console.error(chalk.red('❌ Fork analysis failed:'), error instanceof Error ? error.message : error);
       process.exit(1);
     }
   });
@@ -337,6 +388,153 @@ function printMarkdownAnalysis(analysis: any) {
     console.log('## 💡 Revival Recommendations\n');
     analysis.recommendations.forEach((rec: string) => console.log(`- ${rec}`));
     console.log('');
+  }
+}
+
+function printTableForkAnalysis(forkComparison: any) {
+  const { original, totalForks, analyzedForks, activeForks, topRecommendations, insights } = forkComparison;
+  
+  console.log(chalk.blue.bold(`\n🍴 Fork Analysis: ${original.full_name}\n`));
+  
+  console.log(chalk.bold('Overview:'));
+  console.log(`Total Forks: ${totalForks}`);
+  console.log(`Analyzed: ${analyzedForks}`);
+  console.log(`Active: ${activeForks.length}`);
+  console.log(`Execution Time: ${Math.round(forkComparison.executionTime / 1000)}s\n`);
+  
+  if (insights.length > 0) {
+    console.log(chalk.bold('Insights:'));
+    insights.forEach((insight: string) => console.log(`• ${insight}`));
+    console.log('');
+  }
+  
+  if (topRecommendations.length === 0) {
+    console.log(chalk.yellow('No active forks found matching criteria.'));
+    return;
+  }
+  
+  console.log(chalk.bold('Top Fork Recommendations:\n'));
+  
+  console.log(chalk.bold('Rank'.padEnd(6)) + 
+              chalk.bold('Repository'.padEnd(35)) + 
+              chalk.bold('Stars'.padEnd(8)) + 
+              chalk.bold('Activity'.padEnd(10)) + 
+              chalk.bold('Health'.padEnd(10)) + 
+              chalk.bold('Last Active'.padEnd(15)) + 
+              chalk.bold('Status'));
+  
+  console.log('─'.repeat(110));
+  
+  topRecommendations.slice(0, 10).forEach((fork: any, index: number) => {
+    const repo = fork.repository;
+    const name = repo.full_name.length > 33 ? repo.full_name.substring(0, 30) + '...' : repo.full_name;
+    const stars = repo.stargazers_count.toString();
+    const activity = `${fork.activityScore}%`;
+    const health = fork.analysis.dependencyHealth;
+    const lastActive = `${fork.lastActivityDays}d ago`;
+    
+    // Health indicator
+    let healthIndicator = '❓';
+    switch (health) {
+      case 'excellent': healthIndicator = chalk.green('✅'); break;
+      case 'good': healthIndicator = chalk.green('👍'); break;
+      case 'fair': healthIndicator = chalk.yellow('⚠️'); break;
+      case 'poor': healthIndicator = chalk.red('👎'); break;
+      case 'critical': healthIndicator = chalk.red('🚨'); break;
+      default: healthIndicator = chalk.gray('❓'); break;
+    }
+    
+    // Status based on overall score
+    let status = '';
+    const overallScore = (fork.activityScore * 0.4) + (fork.analysis.revivalPotential * 0.3) + (fork.maintainerResponsiveness * 0.3);
+    if (overallScore > 80) {
+      status = chalk.green('🌟 EXCELLENT');
+    } else if (overallScore > 60) {
+      status = chalk.green('🎯 GOOD');
+    } else if (overallScore > 40) {
+      status = chalk.yellow('⚠️ FAIR');
+    } else {
+      status = chalk.red('❌ POOR');
+    }
+    
+    console.log(
+      `#${fork.forkRank}`.padEnd(6) +
+      name.padEnd(35) +
+      stars.padEnd(8) +
+      activity.padEnd(10) +
+      (healthIndicator + '     ').substring(0, 10) +
+      lastActive.padEnd(15) +
+      status
+    );
+  });
+  
+  // Show special recommendations
+  if (forkComparison.bestForRevival) {
+    console.log(chalk.bold('\n🚀 Best for Revival:'));
+    const best = forkComparison.bestForRevival;
+    console.log(`${best.repository.full_name} - Revival potential: ${best.analysis.revivalPotential}%`);
+  }
+  
+  if (forkComparison.bestForContribution) {
+    console.log(chalk.bold('\n🤝 Best for Contribution:'));
+    const best = forkComparison.bestForContribution;
+    console.log(`${best.repository.full_name} - Maintainer responsiveness: ${best.maintainerResponsiveness}%`);
+  }
+  
+  if (forkComparison.mostDiverged) {
+    console.log(chalk.bold('\n🔀 Most Diverged:'));
+    const diverged = forkComparison.mostDiverged;
+    console.log(`${diverged.repository.full_name} - ${diverged.divergenceFromOriginal} commits ahead`);
+  }
+}
+
+function printMarkdownForkAnalysis(forkComparison: any) {
+  const { original, totalForks, analyzedForks, activeForks, topRecommendations, insights } = forkComparison;
+  
+  console.log(`# 🍴 Fork Analysis: ${original.full_name}\n`);
+  console.log(`[Original Repository](${original.html_url})\n`);
+  
+  console.log('## 📊 Overview\n');
+  console.log(`- **Total Forks**: ${totalForks}`);
+  console.log(`- **Analyzed**: ${analyzedForks}`);
+  console.log(`- **Active**: ${activeForks.length}`);
+  console.log(`- **Execution Time**: ${Math.round(forkComparison.executionTime / 1000)}s\n`);
+  
+  if (insights.length > 0) {
+    console.log('## 💡 Insights\n');
+    insights.forEach((insight: string) => console.log(`- ${insight}`));
+    console.log('');
+  }
+  
+  if (topRecommendations.length > 0) {
+    console.log('## 🏆 Top Fork Recommendations\n');
+    console.log('| Rank | Repository | Stars | Activity | Health | Last Active | Revival Potential |');
+    console.log('|------|------------|-------|----------|--------|-------------|-------------------|');
+    
+    topRecommendations.slice(0, 10).forEach((fork: any) => {
+      const repo = fork.repository;
+      console.log(`| #${fork.forkRank} | [${repo.full_name}](${repo.html_url}) | ${repo.stargazers_count} | ${fork.activityScore}% | ${fork.analysis.dependencyHealth} | ${fork.lastActivityDays}d ago | ${fork.analysis.revivalPotential}% |`);
+    });
+    console.log('');
+  }
+  
+  // Special recommendations
+  if (forkComparison.bestForRevival) {
+    console.log('## 🚀 Best for Revival\n');
+    const best = forkComparison.bestForRevival;
+    console.log(`**[${best.repository.full_name}](${best.repository.html_url})**`);
+    console.log(`- Revival Potential: ${best.analysis.revivalPotential}%`);
+    console.log(`- Activity Score: ${best.activityScore}%`);
+    console.log(`- Dependency Health: ${best.analysis.dependencyHealth}\n`);
+  }
+  
+  if (forkComparison.bestForContribution) {
+    console.log('## 🤝 Best for Contribution\n');
+    const best = forkComparison.bestForContribution;
+    console.log(`**[${best.repository.full_name}](${best.repository.html_url})**`);
+    console.log(`- Maintainer Responsiveness: ${best.maintainerResponsiveness}%`);
+    console.log(`- Activity Score: ${best.activityScore}%`);
+    console.log(`- Last Active: ${best.lastActivityDays} days ago\n`);
   }
 }
 

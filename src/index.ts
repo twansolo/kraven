@@ -4,6 +4,7 @@ export { KravenHunter } from './kraven';
 export { GitHubService } from './services/github';
 export { RepositoryAnalyzer } from './services/analyzer';
 export { DependencyAnalyzer } from './services/dependency-analyzer';
+export { ForkAnalyzer } from './services/fork-analyzer';
 export * from './types';
 
 // Re-export for convenience
