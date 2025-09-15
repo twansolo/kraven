@@ -365,24 +365,28 @@ function printTableResults(analyses: any[]) {
     return;
   }
 
-  console.log(chalk.bold('Repository'.padEnd(30)) + 
-              chalk.bold('Stars'.padEnd(8)) + 
-              chalk.bold('Abandon'.padEnd(10)) + 
-              chalk.bold('Revival'.padEnd(10)) + 
-              chalk.bold('ML'.padEnd(8)) + 
-              chalk.bold('Deps'.padEnd(8)) + 
-              chalk.bold('Last Commit'.padEnd(12)) + 
-              chalk.bold('Status'));
+  // Create properly aligned header
+  const headerRow = [
+    chalk.bold('Repository'.padEnd(33)),
+    chalk.bold('Stars'.padStart(6)),
+    chalk.bold('Abandon'.padStart(7)),
+    chalk.bold('Revival'.padStart(7)),
+    chalk.bold('ML'),
+    chalk.bold('Deps'),
+    chalk.bold('Last Commit'.padStart(10)),
+    chalk.bold('Status')
+  ].join('  ');
   
-  console.log('─'.repeat(95));
+  console.log(headerRow);
+  console.log('─'.repeat(90));
   
   analyses.forEach(analysis => {
     const repo = analysis.repository;
-    const name = repo.full_name.length > 28 ? repo.full_name.substring(0, 25) + '...' : repo.full_name;
+    const name = repo.full_name.length > 33 ? repo.full_name.substring(0, 30) + '...' : repo.full_name;
     const stars = repo.stargazers_count.toString();
     const abandon = `${analysis.abandonmentScore}%`;
     const revival = `${analysis.revivalPotential}%`;
-    const lastCommit = `${analysis.lastCommitAge}d ago`;
+    const lastCommit = `${analysis.lastCommitAge}d`;
     
     // ML indicator
     let mlIndicator = '❓';
@@ -419,7 +423,7 @@ function printTableResults(analyses: any[]) {
       if (mlAbandonment > 70 && mlRevival > 60) {
         status = chalk.green('🎯 PRIME');
       } else if (mlAbandonment > 50 && mlRevival > 40) {
-        status = chalk.yellow('⚠️  MAYBE');
+        status = chalk.yellow('⚠️ MAYBE');
       } else {
         status = chalk.red('❌ SKIP');
       }
@@ -428,22 +432,25 @@ function printTableResults(analyses: any[]) {
       if (analysis.abandonmentScore > 70 && analysis.revivalPotential > 60) {
         status = chalk.green('🎯 PRIME');
       } else if (analysis.abandonmentScore > 50 && analysis.revivalPotential > 40) {
-        status = chalk.yellow('⚠️  MAYBE');
+        status = chalk.yellow('⚠️ MAYBE');
       } else {
         status = chalk.red('❌ SKIP');
       }
     }
     
-    console.log(
-      name.padEnd(30) +
-      stars.padEnd(8) +
-      abandon.padEnd(10) +
-      revival.padEnd(10) +
-      (mlIndicator + '   ').substring(0, 8) +
-      (depsIndicator + '   ').substring(0, 8) +
-      lastCommit.padEnd(12) +
+    // Use fixed-width formatting to handle emojis properly
+    const formattedRow = [
+      name.padEnd(33).substring(0, 33),
+      stars.padStart(6),
+      abandon.padStart(7),
+      revival.padStart(7),
+      mlIndicator,
+      depsIndicator,
+      lastCommit.padStart(10),
       status
-    );
+    ].join('  ');
+    
+    console.log(formattedRow);
   });
 }
 
