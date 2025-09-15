@@ -92,6 +92,28 @@ kraven hunt --language typescript --ml-enhanced --ml-confidence 0.8
 kraven analyze microsoft/typescript --ml-enhanced
 ```
 
+## Organization & User Scanning
+
+### Scan entire organization
+```bash
+kraven scan microsoft --max-repos 20 --min-stars 100
+```
+
+### Scan user repositories
+```bash
+kraven scan torvalds --max-repos 10 --exclude-forks
+```
+
+### Multi-organization comparison
+```bash
+kraven scan-multi microsoft,google,facebook --max-repos 15
+```
+
+### Language-specific organization scan
+```bash
+kraven scan netflix --languages javascript,typescript --max-repos 25
+```
+
 ## Utility Commands
 
 ### Check API rate limits

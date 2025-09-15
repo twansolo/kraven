@@ -95,7 +95,7 @@ export class OrganizationScanner {
       );
       
       // Generate insights and recommendations
-      const results = this.generateOrganizationInsights(
+      const results = this.generateScanResults(
         orgInfo,
         allRepositories.length,
         analyses,
@@ -110,45 +110,26 @@ export class OrganizationScanner {
   }
 
   /**
-   * Get organization or user information
+   * Get organization or user information using GitHubService
    */
   private async getOrganizationInfo(orgOrUser: string): Promise<OrganizationInfo> {
     try {
-      // Try as organization first
-      const response = await fetch(`https://api.github.com/orgs/${orgOrUser}`, {
-        headers: {
-          'Accept': 'application/vnd.github.v3+json',
-          'User-Agent': 'Kraven-OrgScanner/1.0.0'
-        }
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        return { ...data, type: 'Organization' };
+      // Try as organization first using axios (like GitHubService)
+      const orgResponse = await this.githubService.api.get(`/orgs/${orgOrUser}`);
+      return { ...orgResponse.data, type: 'Organization' };
+    } catch (orgError) {
+      try {
+        // Try as user if organization fails
+        const userResponse = await this.githubService.api.get(`/users/${orgOrUser}`);
+        return { ...userResponse.data, type: 'User' };
+      } catch (userError) {
+        throw new Error(`Organization or user '${orgOrUser}' not found`);
       }
-      
-      // Try as user if organization fails
-      const userResponse = await fetch(`https://api.github.com/users/${orgOrUser}`, {
-        headers: {
-          'Accept': 'application/vnd.github.v3+json',
-          'User-Agent': 'Kraven-OrgScanner/1.0.0'
-        }
-      });
-      
-      if (userResponse.ok) {
-        const userData = await userResponse.json();
-        return { ...userData, type: 'User' };
-      }
-      
-      throw new Error(`Organization or user '${orgOrUser}' not found`);
-      
-    } catch (error) {
-      throw new Error(`Failed to fetch organization info: ${error instanceof Error ? error.message : error}`);
     }
   }
 
   /**
-   * Get all repositories for an organization or user
+   * Get all repositories for an organization or user using GitHubService
    */
   private async getAllRepositories(
     orgOrUser: string,
@@ -157,25 +138,38 @@ export class OrganizationScanner {
   ): Promise<GitHubRepository[]> {
     const repositories: GitHubRepository[] = [];
     let page = 1;
-    const perPage = 100; // GitHub API maximum
+    const perPage = 30; // Smaller page size for better rate limiting
     
     while (repositories.length < maxRepos) {
       try {
-        // Determine API endpoint based on type
-        const endpoint = await this.getRepositoriesEndpoint(orgOrUser);
+        let pageRepos: GitHubRepository[] = [];
         
-        const response = await fetch(`${endpoint}?page=${page}&per_page=${perPage}&sort=${filters.sortBy || 'updated'}&direction=${filters.order || 'desc'}`, {
-          headers: {
-            'Accept': 'application/vnd.github.v3+json',
-            'User-Agent': 'Kraven-OrgScanner/1.0.0'
-          }
-        });
-        
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        // Try organization endpoint first
+        try {
+          const orgResponse = await this.githubService.api.get(`/orgs/${orgOrUser}/repos`, {
+            params: {
+              page,
+              per_page: perPage,
+              sort: filters.sortBy || 'updated',
+              direction: filters.order || 'desc'
+            }
+          });
+          pageRepos = orgResponse.data;
+          console.log(`  📦 Fetched ${pageRepos.length} repositories from organization endpoint (page ${page})`);
+        } catch (orgError) {
+          // Try user endpoint if organization fails
+          console.log(`  🔄 Organization endpoint failed, trying user endpoint...`);
+          const userResponse = await this.githubService.api.get(`/users/${orgOrUser}/repos`, {
+            params: {
+              page,
+              per_page: perPage,
+              sort: filters.sortBy || 'updated',
+              direction: filters.order || 'desc'
+            }
+          });
+          pageRepos = userResponse.data;
+          console.log(`  📦 Fetched ${pageRepos.length} repositories from user endpoint (page ${page})`);
         }
-        
-        const pageRepos = await response.json();
         
         if (pageRepos.length === 0) {
           break; // No more repositories
@@ -185,10 +179,10 @@ export class OrganizationScanner {
         page++;
         
         // Rate limiting
-        await this.delay(200);
+        await this.delay(300);
         
         // GitHub API pagination limit
-        if (page > 10) break; // Max 1000 repos (10 pages * 100 per page)
+        if (page > 10) break; // Max 300 repos (10 pages * 30 per page)
         
       } catch (error) {
         console.warn(`Failed to fetch repositories page ${page}:`, error);
@@ -199,29 +193,6 @@ export class OrganizationScanner {
     return repositories.slice(0, maxRepos);
   }
 
-  /**
-   * Determine the correct API endpoint for repositories
-   */
-  private async getRepositoriesEndpoint(orgOrUser: string): Promise<string> {
-    // Try organization endpoint first
-    try {
-      const response = await fetch(`https://api.github.com/orgs/${orgOrUser}`, {
-        headers: {
-          'Accept': 'application/vnd.github.v3+json',
-          'User-Agent': 'Kraven-OrgScanner/1.0.0'
-        }
-      });
-      
-      if (response.ok) {
-        return `https://api.github.com/orgs/${orgOrUser}/repos`;
-      }
-    } catch (error) {
-      // Fall through to user endpoint
-    }
-    
-    // Use user endpoint
-    return `https://api.github.com/users/${orgOrUser}/repos`;
-  }
 
   /**
    * Filter repositories based on criteria
@@ -234,8 +205,8 @@ export class OrganizationScanner {
       // Exclude archived if requested
       if (filters.excludeArchived && repo.archived) return false;
       
-      // Exclude forks if requested
-      if (filters.excludeForks && repo.fork) return false;
+      // Exclude forks if requested (fork property may not exist in our interface)
+      if (filters.excludeForks && (repo as any).fork) return false;
       
       // Filter by stars
       if (filters.minStars && repo.stargazers_count < filters.minStars) return false;
@@ -316,9 +287,9 @@ export class OrganizationScanner {
   }
 
   /**
-   * Generate comprehensive organization insights
+   * Generate comprehensive scan results
    */
-  private generateOrganizationInsights(
+  private generateScanResults(
     orgInfo: OrganizationInfo,
     totalRepos: number,
     analyses: (RepositoryAnalysis | EnhancedRepositoryAnalysis)[],
@@ -361,7 +332,7 @@ export class OrganizationScanner {
     });
     
     // Generate insights
-    const insights = this.generateOrganizationInsights(orgInfo, analyses, abandonedProjects, primeRevivalCandidates);
+    const insights = this.generateInsightsList(orgInfo, analyses, abandonedProjects, primeRevivalCandidates);
     
     // Generate recommendations
     const recommendations = this.generateOrganizationRecommendations(orgInfo, analyses, abandonedProjects, healthSummary);
@@ -383,9 +354,9 @@ export class OrganizationScanner {
   }
 
   /**
-   * Generate organization-specific insights
+   * Generate organization-specific insights list
    */
-  private generateOrganizationInsights(
+  private generateInsightsList(
     orgInfo: OrganizationInfo,
     analyses: (RepositoryAnalysis | EnhancedRepositoryAnalysis)[],
     abandonedProjects: (RepositoryAnalysis | EnhancedRepositoryAnalysis)[],

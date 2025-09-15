@@ -943,4 +943,211 @@ async function generateTrainingRepositories(githubService: any, sampleSize: numb
   return repositories.slice(0, sampleSize);
 }
 
+/**
+ * Print organization scan results in table format
+ */
+function printTableOrganizationResults(results: any) {
+  const { organization, totalRepositories, scannedRepositories, abandonedProjects, primeRevivalCandidates, healthSummary, insights } = results;
+  
+  console.log(chalk.blue.bold(`\n🏢 Organization Scan: ${organization.name || organization.login}\n`));
+  
+  // Overview stats
+  console.log(chalk.bold('Overview:'));
+  console.log(`Type: ${organization.type}`);
+  console.log(`Total Public Repos: ${totalRepositories}`);
+  console.log(`Scanned: ${scannedRepositories}`);
+  console.log(`Abandoned: ${abandonedProjects.length} (${Math.round((abandonedProjects.length / scannedRepositories) * 100)}%)`);
+  console.log(`Prime Revival Candidates: ${primeRevivalCandidates.length}`);
+  console.log(`Execution Time: ${Math.round(results.executionTime / 1000)}s\n`);
+  
+  // Health summary
+  console.log(chalk.bold('Dependency Health Summary:'));
+  console.log(`✅ Excellent: ${healthSummary.excellent}`);
+  console.log(`👍 Good: ${healthSummary.good}`);
+  console.log(`⚠️ Fair: ${healthSummary.fair}`);
+  console.log(`👎 Poor: ${healthSummary.poor}`);
+  console.log(`🚨 Critical: ${healthSummary.critical}\n`);
+  
+  // Language breakdown
+  if (Object.keys(results.languageBreakdown).length > 0) {
+    console.log(chalk.bold('Language Breakdown:'));
+    Object.entries(results.languageBreakdown)
+      .sort(([,a], [,b]) => (b as number) - (a as number))
+      .slice(0, 5)
+      .forEach(([language, count]) => {
+        console.log(`  ${language}: ${count} repositories`);
+      });
+    console.log('');
+  }
+  
+  // Insights
+  if (insights.length > 0) {
+    console.log(chalk.bold('Key Insights:'));
+    insights.forEach((insight: string) => console.log(`• ${insight}`));
+    console.log('');
+  }
+  
+  // Show abandoned projects
+  if (abandonedProjects.length > 0) {
+    console.log(chalk.bold('🚨 Abandoned Projects:\n'));
+    
+    const headerRow = [
+      chalk.bold('Repository'.padEnd(40)),
+      chalk.bold('Stars'.padStart(6)),
+      chalk.bold('Abandon'.padStart(7)),
+      chalk.bold('Revival'.padStart(7)),
+      chalk.bold('Last Commit'.padStart(12))
+    ].join('  ');
+    
+    console.log(headerRow);
+    console.log('─'.repeat(85));
+    
+    abandonedProjects.slice(0, 10).forEach((analysis: any) => {
+      const repo = analysis.repository;
+      const name = repo.full_name.length > 38 ? repo.full_name.substring(0, 35) + '...' : repo.full_name;
+      
+      const row = [
+        name.padEnd(40),
+        repo.stargazers_count.toString().padStart(6),
+        `${analysis.abandonmentScore}%`.padStart(7),
+        `${analysis.revivalPotential}%`.padStart(7),
+        `${analysis.lastCommitAge}d`.padStart(12)
+      ].join('  ');
+      
+      console.log(row);
+    });
+    
+    if (abandonedProjects.length > 10) {
+      console.log(chalk.gray(`\n... and ${abandonedProjects.length - 10} more abandoned projects`));
+    }
+  }
+  
+  // Show prime revival candidates
+  if (primeRevivalCandidates.length > 0) {
+    console.log(chalk.bold('\n🎯 Prime Revival Candidates:\n'));
+    
+    primeRevivalCandidates.slice(0, 5).forEach((analysis: any) => {
+      const repo = analysis.repository;
+      console.log(`${chalk.green('🎯')} ${chalk.bold(repo.full_name)}`);
+      console.log(`   ${repo.description || 'No description'}`);
+      console.log(`   ⭐ ${repo.stargazers_count} stars | 🍴 ${repo.forks_count} forks | 📅 ${analysis.lastCommitAge}d ago`);
+      console.log(`   📊 Abandonment: ${analysis.abandonmentScore}% | Revival: ${analysis.revivalPotential}%`);
+      console.log('');
+    });
+  }
+  
+  // Recommendations
+  if (results.recommendations.length > 0) {
+    console.log(chalk.bold('💡 Recommendations:'));
+    results.recommendations.forEach((rec: string) => console.log(`• ${rec}`));
+  }
+}
+
+/**
+ * Print markdown organization results
+ */
+function printMarkdownOrganizationResults(results: any) {
+  const { organization, totalRepositories, scannedRepositories, abandonedProjects, primeRevivalCandidates } = results;
+  
+  console.log(`# 🏢 Organization Scan: ${organization.name || organization.login}\n`);
+  console.log(`[View on GitHub](${organization.html_url})\n`);
+  
+  console.log('## 📊 Overview\n');
+  console.log(`- **Type**: ${organization.type}`);
+  console.log(`- **Total Public Repos**: ${totalRepositories}`);
+  console.log(`- **Scanned**: ${scannedRepositories}`);
+  console.log(`- **Abandoned**: ${abandonedProjects.length} (${Math.round((abandonedProjects.length / scannedRepositories) * 100)}%)`);
+  console.log(`- **Prime Revival Candidates**: ${primeRevivalCandidates.length}`);
+  console.log(`- **Execution Time**: ${Math.round(results.executionTime / 1000)}s\n`);
+  
+  if (results.insights.length > 0) {
+    console.log('## 💡 Key Insights\n');
+    results.insights.forEach((insight: string) => console.log(`- ${insight}`));
+    console.log('');
+  }
+  
+  if (abandonedProjects.length > 0) {
+    console.log('## 🚨 Abandoned Projects\n');
+    console.log('| Repository | Stars | Abandonment | Revival Potential | Last Commit |');
+    console.log('|------------|-------|-------------|-------------------|-------------|');
+    
+    abandonedProjects.slice(0, 10).forEach((analysis: any) => {
+      const repo = analysis.repository;
+      console.log(`| [${repo.full_name}](${repo.html_url}) | ${repo.stargazers_count} | ${analysis.abandonmentScore}% | ${analysis.revivalPotential}% | ${analysis.lastCommitAge}d ago |`);
+    });
+    console.log('');
+  }
+  
+  if (primeRevivalCandidates.length > 0) {
+    console.log('## 🎯 Prime Revival Candidates\n');
+    
+    primeRevivalCandidates.slice(0, 5).forEach((analysis: any) => {
+      const repo = analysis.repository;
+      console.log(`### [${repo.full_name}](${repo.html_url})\n`);
+      console.log(`${repo.description || 'No description'}\n`);
+      console.log(`- **Stars**: ${repo.stargazers_count}`);
+      console.log(`- **Forks**: ${repo.forks_count}`);
+      console.log(`- **Last Commit**: ${analysis.lastCommitAge} days ago`);
+      console.log(`- **Abandonment Score**: ${analysis.abandonmentScore}%`);
+      console.log(`- **Revival Potential**: ${analysis.revivalPotential}%\n`);
+    });
+  }
+}
+
+/**
+ * Print comparative organization results
+ */
+function printComparativeOrganizationResults(results: any[], comparative: any) {
+  console.log(chalk.blue.bold(`\n🏢 Multi-Organization Scan Results\n`));
+  
+  console.log(chalk.bold('Overview:'));
+  console.log(`Organizations Scanned: ${comparative.totalOrganizations}`);
+  console.log(`Total Repositories: ${comparative.totalRepositories}`);
+  console.log(`Average Abandonment Rate: ${Math.round(comparative.averageAbandonmentRate)}%`);
+  console.log(`Best Maintained: ${comparative.bestMaintainedOrg}`);
+  console.log(`Needs Attention: ${comparative.mostAbandonedOrg}\n`);
+  
+  // Organization comparison table
+  console.log(chalk.bold('Organization Comparison:\n'));
+  
+  const headerRow = [
+    chalk.bold('Organization'.padEnd(20)),
+    chalk.bold('Repos'.padStart(6)),
+    chalk.bold('Abandoned'.padStart(9)),
+    chalk.bold('Prime'.padStart(5)),
+    chalk.bold('Critical'.padStart(8)),
+    chalk.bold('Health')
+  ].join('  ');
+  
+  console.log(headerRow);
+  console.log('─'.repeat(70));
+  
+  results.forEach((result: any) => {
+    const abandonmentRate = Math.round((result.abandonedProjects.length / result.scannedRepositories) * 100);
+    const healthScore = Math.round(((result.healthSummary.excellent + result.healthSummary.good) / result.scannedRepositories) * 100);
+    
+    let healthIndicator = '❓';
+    if (healthScore > 80) healthIndicator = chalk.green('✅');
+    else if (healthScore > 60) healthIndicator = chalk.yellow('⚠️');
+    else healthIndicator = chalk.red('🚨');
+    
+    const row = [
+      result.organization.login.padEnd(20),
+      result.scannedRepositories.toString().padStart(6),
+      `${abandonmentRate}%`.padStart(9),
+      result.primeRevivalCandidates.length.toString().padStart(5),
+      result.healthSummary.critical.toString().padStart(8),
+      healthIndicator
+    ].join('  ');
+    
+    console.log(row);
+  });
+  
+  // Recommendations
+  if (comparative.recommendations.length > 0) {
+    console.log(chalk.bold('\n💡 Recommendations:'));
+    comparative.recommendations.forEach((rec: string) => console.log(`• ${rec}`));
+  }
+}
+
 program.parse();

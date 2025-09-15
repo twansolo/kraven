@@ -2,7 +2,7 @@ import axios, { AxiosInstance } from 'axios';
 import { GitHubRepository, GitHubSearchResponse, SearchFilters } from '../types';
 
 export class GitHubService {
-  private api: AxiosInstance;
+  public api: AxiosInstance; // Make public for organization scanner
   private readonly baseURL = 'https://api.github.com';
 
   constructor(token?: string) {
