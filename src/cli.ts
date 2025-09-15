@@ -7,8 +7,10 @@ import * as dotenv from 'dotenv';
 import * as path from 'path';
 import * as fs from 'fs';
 import { KravenHunter } from './kraven';
-import { SearchFilters, ProjectCategory, ForkAnalysisOptions } from './types';
+import { SearchFilters, ProjectCategory, ForkAnalysisOptions, PredictionConfig } from './types';
 import { ForkAnalyzer } from './services/fork-analyzer';
+import { MLTrainer } from './services/ml-trainer';
+import { MLPredictor } from './services/ml-predictor';
 
 // Load environment variables from multiple locations
 function loadEnvironmentVariables() {
@@ -67,6 +69,8 @@ program
   .option('--limit <number>', 'Maximum results to analyze', parseInt, 10)
   .option('--output <format>', 'Output format: table, json, markdown', 'table')
   .option('--skip-dependencies', 'Skip dependency analysis (faster but less detailed)', false)
+  .option('--ml-enhanced', 'Use machine learning enhanced scoring (requires trained models)', false)
+  .option('--ml-confidence <threshold>', 'ML confidence threshold (0.1-1.0)', parseFloat, 0.7)
   .action(async (options) => {
     // Only show spinner for non-JSON output to keep JSON clean
     const spinner = options.output === 'json' ? null : ora('🕷️ Kraven is hunting...').start();
@@ -84,7 +88,15 @@ program
       };
 
       const kraven = new KravenHunter();
-      const results = await kraven.hunt(filters, options.limit);
+      
+      // Configure ML settings
+      const mlConfig: PredictionConfig = {
+        useMLScoring: options.mlEnhanced,
+        confidenceThreshold: options.mlConfidence || 0.7,
+        fallbackToRuleBase: true
+      };
+      
+      const results = await kraven.hunt(filters, options.limit, options.mlEnhanced, mlConfig);
       
       if (spinner) spinner.stop();
       
@@ -113,12 +125,22 @@ program
   .command('analyze <repository>')
   .description('Analyze a specific repository (format: owner/repo)')
   .option('--output <format>', 'Output format: table, json, markdown', 'table')
+  .option('--ml-enhanced', 'Use machine learning enhanced analysis', false)
+  .option('--ml-confidence <threshold>', 'ML confidence threshold (0.1-1.0)', parseFloat, 0.7)
   .action(async (repository, options) => {
     const spinner = ora(`🔍 Analyzing ${repository}...`).start();
     
     try {
       const kraven = new KravenHunter();
-      const analysis = await kraven.analyzeRepository(repository);
+      
+      // Configure ML settings
+      const mlConfig: PredictionConfig = {
+        useMLScoring: options.mlEnhanced,
+        confidenceThreshold: options.mlConfidence || 0.7,
+        fallbackToRuleBase: true
+      };
+      
+      const analysis = await kraven.analyzeRepository(repository, options.mlEnhanced, mlConfig);
       
       spinner.stop();
       
@@ -187,6 +209,92 @@ program
     }
   });
 
+// ML Training command
+program
+  .command('train')
+  .description('Train ML models for enhanced scoring')
+  .option('--repositories <file>', 'File containing repository list (one per line)')
+  .option('--sample-size <number>', 'Number of repositories to sample for training', parseInt, 100)
+  .option('--popular-repos', 'Include popular repositories in training data', false)
+  .action(async (options) => {
+    const spinner = ora('🤖 Preparing ML training...').start();
+    
+    try {
+      const kraven = new KravenHunter();
+      const githubService = kraven.githubService;
+      const analyzer = new (await import('./services/analyzer')).RepositoryAnalyzer(githubService);
+      const trainer = new MLTrainer(githubService, analyzer);
+      
+      let repositories: string[] = [];
+      
+      if (options.repositories) {
+        // Load from file
+        const fileContent = fs.readFileSync(options.repositories, 'utf-8');
+        repositories = fileContent.split('\n').filter(line => line.trim());
+      } else {
+        // Generate sample repositories
+        spinner.text = '🔍 Discovering repositories for training...';
+        repositories = await generateTrainingRepositories(githubService, options.sampleSize, options.popularRepos);
+      }
+      
+      spinner.text = `📚 Collecting training data from ${repositories.length} repositories...`;
+      await trainer.collectTrainingData(repositories);
+      
+      spinner.text = '🧠 Training ML models...';
+      await trainer.trainModels();
+      
+      spinner.stop();
+      console.log(chalk.green('✅ ML models trained successfully!'));
+      console.log(chalk.blue('🎯 Enhanced scoring is now available for analysis'));
+      console.log(chalk.yellow('\n💡 Usage:'));
+      console.log('  kraven hunt --ml-enhanced --language typescript');
+      console.log('  kraven analyze owner/repo --ml-enhanced');
+      
+    } catch (error) {
+      spinner.stop();
+      console.error(chalk.red('❌ ML training failed:'), error instanceof Error ? error.message : error);
+      process.exit(1);
+    }
+  });
+
+// ML Info command
+program
+  .command('ml-info')
+  .description('Show ML model information and status')
+  .action(async () => {
+    try {
+      const predictor = new MLPredictor();
+      
+      if (predictor.isMLAvailable()) {
+        console.log(chalk.green('🧠 ML Models Status: Available'));
+        console.log(chalk.blue('\n📊 Model Information:'));
+        
+        const modelInfo = predictor.getModelInfo();
+        Object.entries(modelInfo).forEach(([modelName, info]) => {
+          console.log(`\n${chalk.bold(modelName.toUpperCase())}:`);
+          console.log(`  Algorithm: ${info.algorithm}`);
+          console.log(`  Accuracy: ${Math.round(info.accuracy * 100)}%`);
+          console.log(`  Training Samples: ${info.training_samples}`);
+          console.log(`  Trained: ${new Date(info.trained_at).toLocaleDateString()}`);
+        });
+        
+        console.log(chalk.yellow('\n💡 Usage Examples:'));
+        console.log('  kraven hunt --ml-enhanced --confidence 0.8');
+        console.log('  kraven analyze microsoft/typescript --ml-enhanced');
+      } else {
+        console.log(chalk.yellow('🤖 ML Models Status: Not Available'));
+        console.log(chalk.blue('\n💡 To enable ML-enhanced scoring:'));
+        console.log('  1. Run: kraven train --sample-size 200');
+        console.log('  2. Wait for training to complete');
+        console.log('  3. Use: kraven hunt --ml-enhanced');
+      }
+      
+    } catch (error) {
+      console.error(chalk.red('❌ Failed to check ML status:'), error instanceof Error ? error.message : error);
+      process.exit(1);
+    }
+  });
+
 // Rate limit command
 program
   .command('rate-limit')
@@ -212,23 +320,35 @@ function printTableResults(analyses: any[]) {
     return;
   }
 
-  console.log(chalk.bold('Repository'.padEnd(35)) + 
+  console.log(chalk.bold('Repository'.padEnd(30)) + 
               chalk.bold('Stars'.padEnd(8)) + 
               chalk.bold('Abandon'.padEnd(10)) + 
               chalk.bold('Revival'.padEnd(10)) + 
-              chalk.bold('Deps'.padEnd(10)) + 
-              chalk.bold('Last Commit'.padEnd(15)) + 
+              chalk.bold('ML'.padEnd(8)) + 
+              chalk.bold('Deps'.padEnd(8)) + 
+              chalk.bold('Last Commit'.padEnd(12)) + 
               chalk.bold('Status'));
   
-  console.log('─'.repeat(100));
+  console.log('─'.repeat(95));
   
   analyses.forEach(analysis => {
     const repo = analysis.repository;
-    const name = repo.full_name.length > 33 ? repo.full_name.substring(0, 30) + '...' : repo.full_name;
+    const name = repo.full_name.length > 28 ? repo.full_name.substring(0, 25) + '...' : repo.full_name;
     const stars = repo.stargazers_count.toString();
     const abandon = `${analysis.abandonmentScore}%`;
     const revival = `${analysis.revivalPotential}%`;
     const lastCommit = `${analysis.lastCommitAge}d ago`;
+    
+    // ML indicator
+    let mlIndicator = '❓';
+    if (analysis.mlPrediction) {
+      const confidence = Math.round(analysis.mlPrediction.confidence_score * 100);
+      if (confidence > 80) mlIndicator = chalk.green('🧠');
+      else if (confidence > 60) mlIndicator = chalk.yellow('🤖');
+      else mlIndicator = chalk.gray('🔮');
+    } else {
+      mlIndicator = chalk.gray('❓');
+    }
     
     // Dependency health indicator
     let depsIndicator = '❓';
@@ -246,21 +366,37 @@ function printTableResults(analyses: any[]) {
     }
     
     let status = '';
-    if (analysis.abandonmentScore > 70 && analysis.revivalPotential > 60) {
-      status = chalk.green('🎯 PRIME');
-    } else if (analysis.abandonmentScore > 50 && analysis.revivalPotential > 40) {
-      status = chalk.yellow('⚠️  MAYBE');
+    // Use ML predictions if available and confident
+    if (analysis.mlPrediction && analysis.mlPrediction.confidence_score > 0.7) {
+      const mlRevival = analysis.mlPrediction.revival_success_probability * 100;
+      const mlAbandonment = analysis.mlPrediction.abandonment_probability * 100;
+      
+      if (mlAbandonment > 70 && mlRevival > 60) {
+        status = chalk.green('🎯 PRIME');
+      } else if (mlAbandonment > 50 && mlRevival > 40) {
+        status = chalk.yellow('⚠️  MAYBE');
+      } else {
+        status = chalk.red('❌ SKIP');
+      }
     } else {
-      status = chalk.red('❌ SKIP');
+      // Fall back to rule-based
+      if (analysis.abandonmentScore > 70 && analysis.revivalPotential > 60) {
+        status = chalk.green('🎯 PRIME');
+      } else if (analysis.abandonmentScore > 50 && analysis.revivalPotential > 40) {
+        status = chalk.yellow('⚠️  MAYBE');
+      } else {
+        status = chalk.red('❌ SKIP');
+      }
     }
     
     console.log(
-      name.padEnd(35) +
+      name.padEnd(30) +
       stars.padEnd(8) +
       abandon.padEnd(10) +
       revival.padEnd(10) +
-      (depsIndicator + '     ').substring(0, 10) +
-      lastCommit.padEnd(15) +
+      (mlIndicator + '   ').substring(0, 8) +
+      (depsIndicator + '   ').substring(0, 8) +
+      lastCommit.padEnd(12) +
       status
     );
   });
@@ -317,6 +453,17 @@ function printTableAnalysis(analysis: any) {
   console.log(`Community Engagement: ${analysis.communityEngagement}%`);
   console.log(`Market Relevance: ${analysis.marketRelevance}%`);
   console.log(`Dependency Health: ${analysis.dependencyHealth}`);
+  
+  // Show ML predictions if available
+  if (analysis.mlPrediction) {
+    console.log(chalk.bold('\n🤖 ML Predictions:'));
+    console.log(`Abandonment Probability: ${Math.round(analysis.mlPrediction.abandonment_probability * 100)}%`);
+    console.log(`Revival Success Probability: ${Math.round(analysis.mlPrediction.revival_success_probability * 100)}%`);
+    console.log(`Estimated Effort: ${analysis.mlPrediction.estimated_effort_days} days`);
+    console.log(`Community Adoption Likelihood: ${Math.round(analysis.mlPrediction.community_adoption_likelihood * 100)}%`);
+    console.log(`ML Confidence: ${Math.round(analysis.mlPrediction.confidence_score * 100)}%`);
+    console.log(`Scoring Method: ${analysis.scoringMethod}`);
+  }
   
   console.log(chalk.bold('\nTiming:'));
   console.log(`Last Commit: ${analysis.lastCommitAge} days ago`);
@@ -536,6 +683,45 @@ function printMarkdownForkAnalysis(forkComparison: any) {
     console.log(`- Activity Score: ${best.activityScore}%`);
     console.log(`- Last Active: ${best.lastActivityDays} days ago\n`);
   }
+}
+
+/**
+ * Generate training repositories for ML
+ */
+async function generateTrainingRepositories(githubService: any, sampleSize: number, includePopular: boolean): Promise<string[]> {
+  const repositories: string[] = [];
+  
+  // Sample from different categories and languages
+  const languages = ['javascript', 'typescript', 'python', 'java', 'go', 'rust'];
+  const categories = ['cli-tool', 'build-tool', 'dev-tool', 'testing', 'framework'];
+  
+  for (const language of languages) {
+    for (const category of categories) {
+      try {
+        const searchResponse = await githubService.searchRepositories({
+          language,
+          category,
+          minStars: includePopular ? 50 : 10,
+          maxStars: includePopular ? undefined : 1000,
+          pushedBefore: '2023-01-01' // Focus on potentially abandoned projects
+        }, 1, Math.min(10, Math.ceil(sampleSize / (languages.length * categories.length))));
+        
+        searchResponse.items.forEach((repo: any) => {
+          if (repositories.length < sampleSize) {
+            repositories.push(repo.full_name);
+          }
+        });
+        
+        // Rate limiting
+        await new Promise(resolve => setTimeout(resolve, 200));
+        
+      } catch (error) {
+        console.warn(`Failed to sample ${language}/${category}:`, error);
+      }
+    }
+  }
+  
+  return repositories.slice(0, sampleSize);
 }
 
 program.parse();

@@ -1,0 +1,10 @@
+bower/bower
+angular/angular.js
+jquery/jquery-ui
+facebook/create-react-app
+atom/atom
+meteor/meteor
+chalk/chalk
+yargs/yargs
+commander/commander.js
+moment/moment

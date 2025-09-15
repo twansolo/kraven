@@ -1,5 +1,6 @@
 import { GitHubService } from './services/github';
 import { RepositoryAnalyzer } from './services/analyzer';
+import { MLPredictor, EnhancedRepositoryAnalysis, PredictionConfig } from './services/ml-predictor';
 import { SearchFilters, HuntResults, RepositoryAnalysis } from './types';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
@@ -29,16 +30,23 @@ loadEnvironmentVariables();
 export class KravenHunter {
   public githubService: GitHubService; // Make public for fork analyzer access
   private analyzer: RepositoryAnalyzer;
+  private mlPredictor: MLPredictor;
 
   constructor(githubToken?: string) {
     this.githubService = new GitHubService(githubToken || process.env.GITHUB_TOKEN);
     this.analyzer = new RepositoryAnalyzer(this.githubService);
+    this.mlPredictor = new MLPredictor();
   }
 
   /**
    * Hunt for abandoned repositories
    */
-  async hunt(filters: SearchFilters, maxResults = 10): Promise<HuntResults> {
+  async hunt(
+    filters: SearchFilters, 
+    maxResults = 10, 
+    useML = false, 
+    mlConfig?: PredictionConfig
+  ): Promise<HuntResults> {
     const startTime = Date.now();
     
     // Search repositories
@@ -46,11 +54,22 @@ export class KravenHunter {
     
     // Analyze repositories (limit to maxResults)
     const repositoriesToAnalyze = searchResponse.items.slice(0, maxResults);
-    const analyses: RepositoryAnalysis[] = [];
+    const analyses: (RepositoryAnalysis | EnhancedRepositoryAnalysis)[] = [];
     
     for (const repo of repositoriesToAnalyze) {
       try {
-        const analysis = await this.analyzer.analyzeRepository(repo);
+        let analysis: RepositoryAnalysis | EnhancedRepositoryAnalysis;
+        
+        if (useML && this.mlPredictor.isMLAvailable()) {
+          // Use ML-enhanced analysis
+          const baseAnalysis = await this.analyzer.analyzeRepository(repo);
+          analysis = await this.mlPredictor.enhanceAnalysis(repo, baseAnalysis, mlConfig);
+        } else {
+          // Use standard rule-based analysis
+          analysis = await this.analyzer.analyzeRepository(repo);
+          (analysis as EnhancedRepositoryAnalysis).scoringMethod = 'rule-based';
+        }
+        
         analyses.push(analysis);
         
         // Add small delay to avoid rate limiting
@@ -60,8 +79,16 @@ export class KravenHunter {
       }
     }
     
-    // Sort by revival potential (descending)
-    analyses.sort((a, b) => b.revivalPotential - a.revivalPotential);
+    // Sort by revival potential (prioritize ML predictions if available)
+    analyses.sort((a, b) => {
+      const aScore = (a as EnhancedRepositoryAnalysis).mlPrediction ? 
+        (a as EnhancedRepositoryAnalysis).mlPrediction!.revival_success_probability * 100 : 
+        a.revivalPotential;
+      const bScore = (b as EnhancedRepositoryAnalysis).mlPrediction ? 
+        (b as EnhancedRepositoryAnalysis).mlPrediction!.revival_success_probability * 100 : 
+        b.revivalPotential;
+      return bScore - aScore;
+    });
     
     const executionTime = Date.now() - startTime;
     
@@ -76,9 +103,13 @@ export class KravenHunter {
   }
 
   /**
-   * Analyze a specific repository
+   * Analyze a specific repository with optional ML enhancement
    */
-  async analyzeRepository(fullName: string): Promise<RepositoryAnalysis> {
+  async analyzeRepository(
+    fullName: string, 
+    useML = false, 
+    mlConfig?: PredictionConfig
+  ): Promise<RepositoryAnalysis | EnhancedRepositoryAnalysis> {
     const [owner, repo] = fullName.split('/');
     
     if (!owner || !repo) {
@@ -86,7 +117,33 @@ export class KravenHunter {
     }
     
     const repository = await this.githubService.getRepository(owner, repo);
-    return await this.analyzer.analyzeRepository(repository);
+    
+    if (useML && this.mlPredictor.isMLAvailable()) {
+      // Use ML-enhanced analysis
+      const baseAnalysis = await this.analyzer.analyzeRepository(repository);
+      return await this.mlPredictor.enhanceAnalysis(repository, baseAnalysis, mlConfig);
+    } else {
+      // Use standard rule-based analysis
+      const analysis = await this.analyzer.analyzeRepository(repository);
+      return {
+        ...analysis,
+        scoringMethod: 'rule-based'
+      } as EnhancedRepositoryAnalysis;
+    }
+  }
+
+  /**
+   * Check if ML models are available
+   */
+  isMLAvailable(): boolean {
+    return this.mlPredictor.isMLAvailable();
+  }
+
+  /**
+   * Get ML model information
+   */
+  getMLModelInfo(): { [key: string]: any } {
+    return this.mlPredictor.getModelInfo();
   }
 
   /**
