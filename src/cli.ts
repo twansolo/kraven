@@ -271,9 +271,9 @@ program
 program
   .command('scan <organization>')
   .description('Scan all repositories for an organization or user')
-  .option('--max-repos <number>', 'Maximum repositories to analyze', parseInt, 50)
-  .option('--min-stars <number>', 'Minimum stars to consider', parseInt, 0)
-  .option('--max-stars <number>', 'Maximum stars to consider', parseInt)
+  .option('--max-repos <number>', 'Maximum repositories to analyze', (value) => parseInt(value, 10), 50)
+  .option('--min-stars <number>', 'Minimum stars to consider', (value) => parseInt(value, 10), 0)
+  .option('--max-stars <number>', 'Maximum stars to consider', (value) => parseInt(value, 10))
   .option('--languages <languages>', 'Comma-separated list of languages to include')
   .option('--exclude-forks', 'Exclude forked repositories', false)
   .option('--exclude-archived', 'Exclude archived repositories', false)
@@ -346,8 +346,8 @@ program
 program
   .command('scan-multi <organizations>')
   .description('Scan multiple organizations or users (comma-separated)')
-  .option('--max-repos <number>', 'Maximum repositories per organization', parseInt, 30)
-  .option('--min-stars <number>', 'Minimum stars to consider', parseInt, 10)
+  .option('--max-repos <number>', 'Maximum repositories per organization', (value) => parseInt(value, 10), 30)
+  .option('--min-stars <number>', 'Minimum stars to consider', (value) => parseInt(value, 10), 10)
   .option('--exclude-forks', 'Exclude forked repositories', false)
   .option('--exclude-archived', 'Exclude archived repositories', false)
   .option('--output <format>', 'Output format: table, json, markdown', 'table')

@@ -151,24 +151,28 @@ export class OrganizationScanner {
               page,
               per_page: perPage,
               sort: filters.sortBy || 'updated',
-              direction: filters.order || 'desc'
+              direction: filters.order || 'desc',
+              type: 'public' // Explicitly request public repos
             }
           });
           pageRepos = orgResponse.data;
-          console.log(`  📦 Fetched ${pageRepos.length} repositories from organization endpoint (page ${page})`);
         } catch (orgError) {
           // Try user endpoint if organization fails
-          console.log(`  🔄 Organization endpoint failed, trying user endpoint...`);
-          const userResponse = await this.githubService.api.get(`/users/${orgOrUser}/repos`, {
-            params: {
-              page,
-              per_page: perPage,
-              sort: filters.sortBy || 'updated',
-              direction: filters.order || 'desc'
-            }
-          });
-          pageRepos = userResponse.data;
-          console.log(`  📦 Fetched ${pageRepos.length} repositories from user endpoint (page ${page})`);
+          try {
+            const userResponse = await this.githubService.api.get(`/users/${orgOrUser}/repos`, {
+              params: {
+                page,
+                per_page: perPage,
+                sort: filters.sortBy || 'updated',
+                direction: filters.order || 'desc',
+                type: 'public' // Explicitly request public repos
+              }
+            });
+            pageRepos = userResponse.data;
+          } catch (userError) {
+            console.error(`Failed to fetch repositories for ${orgOrUser} on page ${page}`);
+            throw userError;
+          }
         }
         
         if (pageRepos.length === 0) {
@@ -182,14 +186,15 @@ export class OrganizationScanner {
         await this.delay(300);
         
         // GitHub API pagination limit
-        if (page > 10) break; // Max 300 repos (10 pages * 30 per page)
+        if (page > 10) {
+          break; // Max 300 repos (10 pages * 30 per page)
+        }
         
       } catch (error) {
-        console.warn(`Failed to fetch repositories page ${page}:`, error);
+        console.warn(`Failed to fetch repositories page ${page} for ${orgOrUser}`);
         break;
       }
     }
-    
     return repositories.slice(0, maxRepos);
   }
 
@@ -363,6 +368,12 @@ export class OrganizationScanner {
     primeRevivalCandidates: (RepositoryAnalysis | EnhancedRepositoryAnalysis)[]
   ): string[] {
     const insights: string[] = [];
+    
+    // Handle case where no repositories were analyzed
+    if (analyses.length === 0) {
+      insights.push(`⚠️ No repositories were analyzed - this could be due to filtering criteria or API access issues`);
+      return insights;
+    }
     
     const abandonmentRate = (abandonedProjects.length / analyses.length) * 100;
     const revivalRate = (primeRevivalCandidates.length / analyses.length) * 100;
